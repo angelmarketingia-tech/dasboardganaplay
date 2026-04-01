@@ -66,7 +66,7 @@ const checkBudgetProgress = (accumulatedSpend, targetBudget, targetDate) => {
   const dailyBurnRateRequired = daysRemaining > 0 ? (remainingBudget / daysRemaining) : 0;
   
   // Porcentaje de progreso financiero
-  const progressPercentage = (accumulatedSpend / targetBudget) * 100;
+  const progressPercentage = targetBudget !== 0 ? (accumulatedSpend / targetBudget) * 100 : 0;
   
   return {
     accumulatedSpend,
