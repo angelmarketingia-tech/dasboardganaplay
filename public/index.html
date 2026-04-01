@@ -1296,21 +1296,20 @@ function renderDashboard() {
 
   // Filtrar datos
   let filtered = globalData.filter(d => {
-    // 1. Filtro de País (Andrés puede ver ambos)
+    // 1. Filtro de País
     if (activeCountry !== 'ALL' && d.Pais !== activeCountry) return false;
-    
     // 2. Filtro de Link/Campaña
     if (selLink && d.Link !== selLink) return false;
-    
-    // 3. Filtro de Flechas (Comparación de strings YYYY-MM-DD es segura y directa)
+    // 3. Filtro de fechas
     if (startDate && d.Fecha < startDate) return false;
     if (endDate && d.Fecha > endDate)     return false;
-    
+    // 4. Ocultar filas sin ningún valor real
+    if (!d.Registros && !d.Depositos && !d.Clicks && !d.Inversion) return false;
     return true;
   });
 
-  // Ordenar: más reciente primero (día vencido arriba)
-  filtered.sort((a,b) => b.Fecha.localeCompare(a.Fecha));
+  // Ordenar: menor fecha primero (cronológico ascendente)
+  filtered.sort((a,b) => a.Fecha.localeCompare(b.Fecha));
 
   let totalClicks = 0, totalReg = 0, totalFtd = 0, totalInv = 0;
   const tbody = $('table-body');
