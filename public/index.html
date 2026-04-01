@@ -995,17 +995,27 @@ function normalizeDate(raw) {
   } else {
     const s = String(raw).trim();
     if (!s) return null;
-    const mx = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-    if (mx) {
-      yr = mx[3]; if(yr.length===2) yr='20'+yr;
-      mo = parseInt(mx[2]);
-      da = parseInt(mx[1]);
+    // Formato ISO YYYY-MM-DD o YYYY/MM/DD (año primero, 4 dígitos)
+    const isoMx = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if (isoMx) {
+      yr = isoMx[1];
+      mo = parseInt(isoMx[2]);
+      da = parseInt(isoMx[3]);
     } else {
-      const d = new Date(raw);
-      if (isNaN(d.getTime())) return null;
-      yr = d.getFullYear();
-      mo = d.getMonth() + 1;
-      da = d.getDate();
+      // Formato DD/MM/YYYY o MM/DD/YYYY (día/mes primero)
+      const mx = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+      if (mx) {
+        yr = mx[3]; if(yr.length===2) yr='20'+yr;
+        mo = parseInt(mx[2]);
+        da = parseInt(mx[1]);
+      } else {
+        // Fallback: usar UTC para evitar desfase de zona horaria
+        const d = new Date(raw);
+        if (isNaN(d.getTime())) return null;
+        yr = d.getUTCFullYear();
+        mo = d.getUTCMonth() + 1;
+        da = d.getUTCDate();
+      }
     }
   }
 
@@ -1141,6 +1151,15 @@ function updateFilterUI() {
   const countries = [...new Set(globalData.map(d => d.Pais))]
     .map(p => p === 'SV' ? '🇸🇻 El Salvador' : '🇬🇹 Guatemala').join(' + ');
   $('topbar-sub').textContent = `${globalData.length} registros cargados · ${countries}`;
+
+  // Auto-llenar rango de fechas con los datos cargados
+  if (globalData.length > 0) {
+    const fechas = globalData.map(d => d.Fecha).filter(Boolean).sort();
+    const fsEl = $('filter-start');
+    const feEl = $('filter-end');
+    if (fsEl && !fsEl.value) fsEl.value = fechas[0];
+    if (feEl && !feEl.value) feEl.value = fechas[fechas.length - 1];
+  }
 
   const ua = $('upload-area');
   if (ua) {
