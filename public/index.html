@@ -146,6 +146,8 @@
     .filter-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 7px; display: block; }
     .filter-input { width: 100%; padding: 9px 13px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: 'Inter'; outline: none; transition: border .2s; }
     .filter-input:focus { border-color: var(--primary); }
+    .qf-btn { background:#f1f5f9; border:1.5px solid #cbd5e1; color:#334155; font-size:12px; padding:7px 12px; }
+    .qf-btn.qf-active { background:var(--primary); border-color:var(--primary); color:#fff; font-weight:700; }
     .btn-action { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: 'Inter'; font-size: 14px; transition: .2s; border: 1.5px solid; }
     .btn-light { background: var(--bg); border-color: var(--border); color: var(--text-main); }
     .btn-light:hover { background: var(--border); }
@@ -362,11 +364,11 @@
     <div class="filter-card">
       <div class="filter-group">
         <span class="filter-label">Fecha Inicial</span>
-        <input type="date" id="filter-start" class="filter-input" onchange="renderDashboard()">
+        <input type="date" id="filter-start" class="filter-input" onchange="clearActiveQF();renderDashboard()">
       </div>
       <div class="filter-group">
         <span class="filter-label">Fecha Final</span>
-        <input type="date" id="filter-end" class="filter-input" onchange="renderDashboard()">
+        <input type="date" id="filter-end" class="filter-input" onchange="clearActiveQF();renderDashboard()">
       </div>
       <div class="filter-group">
         <span class="filter-label">Campaña / Link</span>
@@ -375,12 +377,17 @@
         </select>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
-        <button class="btn-action" style="background:#f1f5f9;border:1.5px solid #cbd5e1;color:#334155;font-size:12px;padding:7px 12px;" onclick="setQuickFilter('yesterday')"><i class="bi bi-calendar-day"></i> Ayer</button>
-        <button class="btn-action" style="background:#f1f5f9;border:1.5px solid #cbd5e1;color:#334155;font-size:12px;padding:7px 12px;" onclick="setQuickFilter('week')"><i class="bi bi-calendar-week"></i> 7 días</button>
-        <button class="btn-action" style="background:#f1f5f9;border:1.5px solid #cbd5e1;color:#334155;font-size:12px;padding:7px 12px;" onclick="setQuickFilter('all')"><i class="bi bi-calendar-range"></i> Todo</button>
+        <button id="qf-yesterday" class="btn-action qf-btn" onclick="setQuickFilter('yesterday')"><i class="bi bi-calendar-day"></i> Ayer</button>
+        <button id="qf-week"      class="btn-action qf-btn" onclick="setQuickFilter('week')"><i class="bi bi-calendar-week"></i> 7 días</button>
+        <button id="qf-all"       class="btn-action qf-btn" onclick="setQuickFilter('all')"><i class="bi bi-calendar-range"></i> Todo</button>
         <button class="btn-action btn-light" onclick="clearFilters()"><i class="bi bi-x"></i> Limpiar</button>
         <button class="btn-action btn-dark-fill restrict-supervisor" onclick="openInvModal()"><i class="bi bi-robot"></i> Cargar Inversión (IA)</button>
       </div>
+    </div>
+    <!-- RESUMEN DEL FILTRO ACTIVO -->
+    <div id="filter-summary" style="display:none; margin-bottom:16px; font-size:12px; font-weight:600; color:var(--text-muted); padding:8px 14px; background:#f8fafc; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:8px;">
+      <i class="bi bi-funnel-fill" style="color:var(--primary);"></i>
+      <span id="filter-summary-text"></span>
     </div>
 
     <!-- KPIs -->
@@ -1155,18 +1162,24 @@ function updateFilterUI() {
     .map(p => p === 'SV' ? '🇸🇻 El Salvador' : '🇬🇹 Guatemala').join(' + ');
   $('topbar-sub').textContent = `${globalData.length} registros cargados · ${countries}`;
 
-  // Auto-llenar filtro con el día anterior (día vencido) al cargar datos
+  // Auto-filtrar al día anterior (día vencido) al cargar datos
   if (globalData.length > 0) {
     const fechas = globalData.map(d => d.Fecha).filter(Boolean).sort();
     const lastDate = fechas[fechas.length - 1];
-    const ayer = new Date(); ayer.setDate(ayer.getDate() - 1);
-    const ayerStr = ayer.toISOString().split('T')[0];
-    // Usar ayer del calendario si hay datos; si no, el último día disponible
+    const hoy  = new Date();
+    const ayer = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1);
+    const ayerStr = localDateStr(ayer); // hora LOCAL, no UTC
     const defaultDate = fechas.includes(ayerStr) ? ayerStr : lastDate;
     const fsEl = $('filter-start');
     const feEl = $('filter-end');
-    if (fsEl && !fsEl.value) fsEl.value = defaultDate;
-    if (feEl && !feEl.value) feEl.value = defaultDate;
+    if (fsEl && !fsEl.value) { fsEl.value = defaultDate; }
+    if (feEl && !feEl.value) { feEl.value = defaultDate; }
+    // Marcar botón "Ayer" como activo por defecto
+    _activeQF = 'yesterday';
+    ['yesterday','week','all'].forEach(k => {
+      const btn = $('qf-' + k);
+      if (btn) btn.classList.toggle('qf-active', k === 'yesterday');
+    });
   }
 
   const ua = $('upload-area');
@@ -1193,29 +1206,56 @@ function clearFilters() {
   renderDashboard();
 }
 
+function clearActiveQF() {
+  _activeQF = null;
+  ['yesterday','week','all'].forEach(k => { const b=$('qf-'+k); if(b) b.classList.remove('qf-active'); });
+}
+// Helper: fecha local YYYY-MM-DD (evita desfase UTC en zonas como UTC-5)
+function localDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+// Helper: formatea fecha YYYY-MM-DD a "31 Mar 2026"
+function fmtDateLabel(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return `${parseInt(d)} ${meses[parseInt(m)-1]} ${y}`;
+}
+
+let _activeQF = null; // rastrea qué botón rápido está activo
+
 function setQuickFilter(mode) {
   const fechas = globalData.map(d => d.Fecha).filter(Boolean).sort();
   if (fechas.length === 0) return;
-  const lastDate = fechas[fechas.length - 1]; // último día disponible en datos
+  const lastDate  = fechas[fechas.length - 1];
+  const firstDate = fechas[0];
 
-  // Calcular ayer real del calendario
-  const ayer = new Date(); ayer.setDate(ayer.getDate() - 1);
-  const ayerStr = ayer.toISOString().split('T')[0];
+  // Calcular ayer usando hora LOCAL (no UTC) para evitar desfase en UTC-5
+  const hoy  = new Date();
+  const ayer = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1);
+  const ayerStr = localDateStr(ayer);
 
   if (mode === 'yesterday') {
-    // Usar ayer del calendario si existe en datos, si no usar el último día disponible
+    // Si ayer existe en los datos úsalo; si no, el último día disponible
     const target = fechas.includes(ayerStr) ? ayerStr : lastDate;
     $('filter-start').value = target;
     $('filter-end').value   = target;
   } else if (mode === 'week') {
-    const hace7 = new Date(); hace7.setDate(hace7.getDate() - 7);
-    const hace7Str = hace7.toISOString().split('T')[0];
-    $('filter-start').value = hace7Str;
+    const hace7 = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 7);
+    $('filter-start').value = localDateStr(hace7);
     $('filter-end').value   = lastDate;
   } else if (mode === 'all') {
-    $('filter-start').value = fechas[0];
+    $('filter-start').value = firstDate;
     $('filter-end').value   = lastDate;
   }
+
+  // Resaltar botón activo
+  _activeQF = mode;
+  ['yesterday','week','all'].forEach(k => {
+    const btn = $('qf-' + k);
+    if (btn) btn.classList.toggle('qf-active', k === mode);
+  });
+
   renderDashboard();
 }
 
@@ -1316,6 +1356,26 @@ function renderDashboard() {
   $('val-cpl').textContent       = globalCPL > 0 ? fmtM(globalCPL) : '—';
   $('val-cpa').textContent       = globalCPA > 0 ? fmtM(globalCPA) : '—';
   $('inv-status').textContent    = totalInv > 0 ? `${filtered.filter(d=>d.Inversion>0).length} días con dato` : 'Usa "Cargar Inversión" para añadir';
+
+  // ── Actualizar resumen de filtro activo ──
+  const summaryEl = $('filter-summary');
+  const summaryTxt = $('filter-summary-text');
+  if (summaryEl && summaryTxt && (startDate || endDate)) {
+    const hoy  = new Date();
+    const ayerLocal = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1);
+    const ayerStr   = localDateStr(ayerLocal);
+    let label = '';
+    if (startDate === endDate && startDate) {
+      const tag = startDate === ayerStr ? ' (Ayer)' : startDate === localDateStr(hoy) ? ' (Hoy)' : '';
+      label = `${fmtDateLabel(startDate)}${tag} · ${filtered.length} registros`;
+    } else {
+      label = `${fmtDateLabel(startDate)} → ${fmtDateLabel(endDate)} · ${filtered.length} registros`;
+    }
+    summaryTxt.textContent = label;
+    summaryEl.style.display = 'flex';
+  } else if (summaryEl) {
+    summaryEl.style.display = 'none';
+  }
 }
 
 // ═══════════════════════════════════════════════════════
