@@ -1303,8 +1303,8 @@ function renderDashboard() {
     // 3. Filtro de fechas
     if (startDate && d.Fecha < startDate) return false;
     if (endDate && d.Fecha > endDate)     return false;
-    // 4. Ocultar filas sin ningún valor real
-    if (!d.Registros && !d.Depositos && !d.Clicks && !d.Inversion) return false;
+    // 4. Ocultar filas sin registros ni depositos (sin actividad real)
+    if (!d.Registros && !d.Depositos) return false;
     return true;
   });
 
