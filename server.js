@@ -184,6 +184,24 @@ app.get('/api/load-data', apiLimiter, (req, res) => {
 });
 
 /**
+ * GET /api/config
+ * Entrega la configuración de Firebase desde variables de entorno (seguro)
+ */
+app.get('/api/config', (req, res) => {
+  res.json({
+    firebase: {
+      apiKey:            process.env.FIREBASE_API_KEY        || null,
+      authDomain:        process.env.FIREBASE_AUTH_DOMAIN    || null,
+      databaseURL:       process.env.FIREBASE_DATABASE_URL   || null,
+      projectId:         process.env.FIREBASE_PROJECT_ID     || null,
+      storageBucket:     process.env.FIREBASE_STORAGE_BUCKET || null,
+      messagingSenderId: process.env.FIREBASE_SENDER_ID      || null,
+      appId:             process.env.FIREBASE_APP_ID         || null,
+    }
+  });
+});
+
+/**
  * GET /health
  */
 app.get('/health', (req, res) => {

@@ -16,30 +16,26 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getDatabase, ref, set, get, child, onValue } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
-    // 🔴 REEMPLAZA ESTO LUEGO CON TUS CREDENCIALES DE FIREBASE
-    const firebaseConfig = {
-      apiKey: "TU_API_KEY",
-      authDomain: "TU_PROYECTO.firebaseapp.com",
-      databaseURL: "https://TU_PROYECTO-default-rtdb.firebaseio.com",
-      projectId: "TU_PROYECTO",
-      storageBucket: "TU_PROYECTO.appspot.com",
-      messagingSenderId: "TUS_NUMEROS",
-      appId: "TU_APP_ID"
-    };
+    try {
+      // Obtener config de Firebase desde el servidor (variables de entorno de Railway)
+      const res = await fetch('/api/config');
+      const { firebase } = await res.json();
 
-    // Inicializar Firebase SOLO si hay una URL válida para evitar errores 
-    let app, db;
-    if (firebaseConfig.databaseURL && !firebaseConfig.databaseURL.includes("TU_PROYECTO")) {
-      app = initializeApp(firebaseConfig);
-      db = getDatabase(app);
-      window.firebaseDb = db;
-      window.firebaseRef = ref;
-      window.firebaseSet = set;
-      window.firebaseGet = get;
-      window.firebaseChild = child;
-      window.firebaseOnValue = onValue;
-    } else {
-      console.warn("⚠️ Firebase no configurado aún. Se usará el LocalStorage o la API.");
+      if (firebase && firebase.databaseURL) {
+        const app = initializeApp(firebase);
+        const db  = getDatabase(app);
+        window.firebaseDb       = db;
+        window.firebaseRef      = ref;
+        window.firebaseSet      = set;
+        window.firebaseGet      = get;
+        window.firebaseChild    = child;
+        window.firebaseOnValue  = onValue;
+        console.log("🔥 Firebase conectado — datos sincronizados en la nube.");
+      } else {
+        console.warn("⚠️ Firebase no configurado. Los datos se guardan solo en este servidor.");
+      }
+    } catch(e) {
+      console.warn("⚠️ No se pudo conectar a Firebase:", e.message);
     }
   </script>
 
@@ -443,9 +439,6 @@
     <input type="text" id="login-user" placeholder="Usuario" autocomplete="off" />
     <input type="password" id="login-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter') handleLogin()" />
     <button class="btn-login" onclick="handleLogin()">Ingresar</button>
-    <button type="button" onclick="handleGuestAccess()" style="width:100%;padding:11px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-size:14px;color:var(--text-muted);cursor:pointer;margin-top:4px;font-family:'Inter';transition:.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
-      <i class="bi bi-eye"></i> Ver dashboard (solo lectura)
-    </button>
     <div id="login-error">Usuario o contraseña incorrectos.</div>
   </div>
 </div>
@@ -870,8 +863,7 @@ function loadFromLocal() {
 // ═══════════════════════════════════════════════════════
 function handleRoleUI() {
   const role = sessionStorage.getItem('gp_role');
-  // viewer y supervisor no pueden editar datos
-  if (role === 'supervisor' || role === 'viewer') {
+  if (role === 'supervisor') {
     document.body.classList.add('is-supervisor');
   } else {
     document.body.classList.remove('is-supervisor');
@@ -958,13 +950,6 @@ function updateStrategyDisplay() {
   if (clearBtn) clearBtn.style.display = role === 'admin' ? 'block' : 'none';
   
   renderStrategyHistory();
-}
-
-async function handleGuestAccess() {
-  sessionStorage.setItem('gp_auth', 'true');
-  sessionStorage.setItem('gp_role', 'viewer');
-  sessionStorage.setItem('gp_token', '');
-  completeLogin();
 }
 
 async function handleLogin() {
