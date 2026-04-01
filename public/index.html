@@ -275,13 +275,7 @@
     .btn-send-chat { background: #fbbf24; color: #92400e; border: none; padding: 0 20px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 8px; }
     .btn-send-chat:hover { background: #f59e0b; }
 
-    /* ── SUPERVISOR RESTRICTIONS ── */
-    body.is-supervisor .restrict-supervisor { display: none !important; }
-    body.is-supervisor .col-link,
-    body.is-supervisor .col-clicks { display: none !important; }
-
-    #supervisor-badge { display: none; background: #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 10px; text-transform: uppercase; }
-    body.is-supervisor #supervisor-badge { display: inline-block; }
+    #supervisor-badge { display: none; }
 
     /* ══════════════════════════════════════════════════════
        MEJORAS UI/UX — Agente 3
@@ -779,14 +773,13 @@ async function saveToLocal() {
     // 1. Guardar local siempre
     localStorage.setItem('gp_dashboard_data', JSON.stringify(bundle));
     
-    // 2. Intentar guardar en Firebase (LA MEJOR OPCIÓN EN VERCEL)
+    // 2. Intentar guardar en Firebase (MEJOR OPCIÓN - sincronización global)
     if (window.firebaseDb && window.firebaseSet && window.firebaseRef) {
       await window.firebaseSet(window.firebaseRef(window.firebaseDb, 'dashboard_data'), bundle);
       console.log("🔥 [FIREBASE - SYNC] Datos subidos y sincronizados mundialmente.");
-      return;
     }
 
-    // 3. Fallback a nuestro endpoint antiguo (Si NO estás usando Vercel)
+    // 3. Guardar también en servidor Express como respaldo (no retornar antes)
     const res = await fetch('/api/save-data', {
       method: 'POST',
       headers: authHeaders(),
@@ -1273,9 +1266,14 @@ function normalizeDate(raw) {
 }
 
 function parseMatrix(matrix) {
-  globalData = [];
   linksSet.clear();
+  // Pre-cargar datos existentes en el mapa para no perderlos al importar nuevo Excel
   const dataMap = new Map();
+  globalData.forEach(item => {
+    const key = `${item.Fecha}::${item.Pais}::${item.Link}`;
+    dataMap.set(key, { ...item });
+    if (item.Link) linksSet.add(item.Link);
+  });
   document.getElementById('topbar-sub').textContent = '⏳ Procesando archivo de gran tamaño...';
 
   if (!matrix || matrix.length < 2) {
@@ -1501,12 +1499,21 @@ function setQuickFilter(mode) {
 
 function resetSystemData() {
   if (confirm("🚨 ¡ADVERTENCIA CRÍTICA!\n\nSe borrarán TODOS los datos cargados: Excel, Inversiones de la IA e Historial de Chat con Andrés.\n\nEsta acción NO se puede deshacer. ¿Deseas continuar?")) {
-    localStorage.removeItem('gp_dashboard_data');
     globalData = [];
     manualInvestments = {};
     strategyHistory = [];
+    localStorage.removeItem('gp_dashboard_data');
+    // Limpiar también Firebase y servidor para que el reload no restaure los datos
+    if (window.firebaseDb && window.firebaseSet && window.firebaseRef) {
+      window.firebaseSet(window.firebaseRef(window.firebaseDb, 'dashboard_data'), null);
+    }
+    fetch('/api/save-data', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ globalData: [], manualInvestments: {}, strategyHistory: [], savedAt: new Date().toISOString() })
+    }).catch(() => {});
     alert("✅ Sistema restablecido con éxito.");
-    location.reload(); // Recargar para limpiar UI
+    location.reload();
   }
 }
 
