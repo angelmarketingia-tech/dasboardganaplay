@@ -88,12 +88,14 @@ app.use(express.json({ limit: '1mb' }));
 
 // ── Rutas ────────────────────────────────────────────────────────────────────
 
-// Archivos estaticos (incluye firebase-config.js generado al inicio)
-app.use(express.static(path.join(__dirname, 'public')));
-
+// index.html siempre dinamico (sin cache) para evitar versiones viejas
 app.get('/', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+// Otros archivos estaticos (CSS, JS, imagenes)
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 /**
  * POST /api/login
