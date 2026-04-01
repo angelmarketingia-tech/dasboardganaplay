@@ -159,14 +159,24 @@
     /* ── UPLOAD ── */
     #upload-area {
       background: var(--card-bg); border: 2px dashed var(--primary);
-      border-radius: var(--border-radius); padding: 44px; text-align: center;
+      border-radius: var(--border-radius); padding: 0; text-align: center;
       margin-bottom: 24px; transition: .25s; cursor: pointer;
+      overflow: hidden;
     }
-    #upload-area:hover { background: rgba(0,212,170,0.04); border-color: var(--primary-dark); }
+    #upload-area:hover { background: rgba(0,212,170,0.03); border-color: var(--primary-dark); }
+    #upload-area:hover .empty-state-icon { transform: scale(1.06); transition: transform .2s; }
     #upload-area .upload-icon { font-size: 48px; color: var(--primary); margin-bottom: 12px; display: block; }
     #upload-area h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
     #upload-area p { color: var(--text-muted); font-size: 13px; line-height: 1.5; }
-    .btn-upload { background: var(--primary); color: white; padding: 11px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; display: inline-block; margin-top: 16px; font-size: 14px; }
+    .btn-upload {
+      background: var(--primary); color: white; padding: 12px 28px;
+      border-radius: 8px; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-top: 4px; font-size: 14px;
+      box-shadow: 0 4px 14px rgba(0,212,170,0.3);
+      transition: .2s;
+    }
+    .btn-upload:hover { background: var(--primary-dark); box-shadow: 0 6px 18px rgba(0,212,170,0.4); transform: translateY(-1px); }
 
     /* ── KPI GRID ── */
     .section-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
@@ -266,11 +276,160 @@
 
     /* ── SUPERVISOR RESTRICTIONS ── */
     body.is-supervisor .restrict-supervisor { display: none !important; }
-    body.is-supervisor .col-link, 
+    body.is-supervisor .col-link,
     body.is-supervisor .col-clicks { display: none !important; }
-    
+
     #supervisor-badge { display: none; background: #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 10px; text-transform: uppercase; }
     body.is-supervisor #supervisor-badge { display: inline-block; }
+
+    /* ══════════════════════════════════════════════════════
+       MEJORAS UI/UX — Agente 3
+    ══════════════════════════════════════════════════════ */
+
+    /* ── 1. COLORES CONDICIONALES CPL/CPA en tabla ── */
+    .cpl-good  { color: #059669; font-weight: 700; background: rgba(5,150,105,0.08); padding: 3px 8px; border-radius: 6px; }
+    .cpl-warn  { color: #d97706; font-weight: 700; background: rgba(217,119,6,0.08);  padding: 3px 8px; border-radius: 6px; }
+    .cpl-bad   { color: #dc2626; font-weight: 700; background: rgba(220,38,38,0.08);  padding: 3px 8px; border-radius: 6px; }
+    .inv-cell  { font-weight: 700; color: var(--sv-color); font-size: 13px; }
+
+    /* ── 2. KPI CARDS — Responsivo móvil ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    /* ── 3. TABLA — scroll visible + columnas ocultables en móvil ── */
+    .table-scroll-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+    }
+    .table-scroll-wrapper::-webkit-scrollbar { height: 6px; }
+    .table-scroll-wrapper::-webkit-scrollbar-track { background: var(--bg); border-radius: 4px; }
+    .table-scroll-wrapper::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+    .table-scroll-wrapper::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
+
+    /* ── 4. EMPTY STATE — área de upload mejorada ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 56px 24px;
+      text-align: center;
+      gap: 14px;
+    }
+    .empty-state-icon {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, rgba(0,212,170,0.12) 0%, rgba(0,179,143,0.2) 100%);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 4px;
+    }
+    .empty-state-icon i { font-size: 38px; color: var(--primary); }
+    .empty-state h3 { font-size: 18px; font-weight: 800; color: var(--text-main); margin: 0; }
+    .empty-state p  { font-size: 13px; color: var(--text-muted); max-width: 380px; line-height: 1.6; margin: 0; }
+    .empty-state-steps {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+      margin-top: 4px;
+    }
+    .empty-step {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 20px; padding: 6px 14px;
+      font-size: 12px; font-weight: 600; color: var(--text-muted);
+    }
+    .empty-step i { color: var(--primary); font-size: 13px; }
+
+    /* ── 5. BARRA DE PROGRESO DE CARGA ── */
+    #upload-progress-bar {
+      display: none;
+      margin: 12px 0 0 0;
+    }
+    #upload-progress-bar .progress-track {
+      width: 100%; height: 6px;
+      background: rgba(0,212,170,0.15); border-radius: 99px; overflow: hidden;
+    }
+    #upload-progress-bar .progress-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+      border-radius: 99px;
+      transition: width 0.35s ease;
+    }
+    #upload-progress-bar .progress-label {
+      font-size: 12px; font-weight: 700; color: var(--primary-dark);
+      text-align: center; margin-top: 8px; min-height: 18px;
+    }
+    .upload-spinner {
+      display: none;
+      width: 28px; height: 28px;
+      border: 3px solid rgba(0,212,170,0.2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 8px auto 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 6. TIPOGRAFÍA Y ESPACIADO — correcciones ── */
+    .topbar-left h2  { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+    .topbar-left p   { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+    .kpi-label       { font-size: 11px; font-weight: 700; letter-spacing: 0.4px; margin-bottom: 12px; }
+    .kpi-value       { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; }
+    .section-label   { font-size: 11px; font-weight: 800; letter-spacing: 1.2px; margin-bottom: 16px; }
+    th { font-size: 10px; font-weight: 800; letter-spacing: 0.8px; padding: 14px 16px; }
+    td { padding: 13px 16px; font-size: 13.5px; }
+
+    /* ── 7. BOTONES DE FILTRO RÁPIDO — móvil ── */
+    .qf-group {
+      display: flex; gap: 6px; align-items: flex-end; flex-wrap: wrap;
+    }
+    .qf-btn {
+      white-space: nowrap;
+      font-size: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    /* ── RESPONSIVE MOBILE ── */
+    @media (max-width: 768px) {
+      .main-content { padding: 16px; margin-left: 0; }
+      .sidebar { display: none; }
+
+      .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .country-switcher { width: 100%; }
+      .country-btn { flex: 1; justify-content: center; font-size: 12px; padding: 9px 8px; }
+
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .kpi-card { padding: 16px; }
+      .kpi-value { font-size: 22px; }
+
+      .filter-card { padding: 16px; gap: 14px; }
+      .filter-group { min-width: 100%; }
+      .qf-group { width: 100%; justify-content: flex-start; }
+      .qf-btn { font-size: 11px; padding: 7px 10px; }
+
+      /* Ocultar columnas menos importantes en móvil */
+      .col-hide-mobile { display: none !important; }
+
+      table { min-width: 460px; }
+      td, th { padding: 10px 12px; font-size: 12px; }
+
+      #upload-area { padding: 32px 20px; }
+      .empty-state { padding: 36px 16px; }
+      .empty-state-icon { width: 64px; height: 64px; }
+      .empty-state-icon i { font-size: 30px; }
+      .empty-state h3 { font-size: 16px; }
+
+      .btn-action { font-size: 12px; padding: 9px 14px; }
+    }
+
+    @media (max-width: 480px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .country-btn { padding: 8px 4px; font-size: 11px; }
+    }
   </style>
 </head>
 <body>
@@ -332,10 +491,25 @@
     <!-- UPLOAD -->
     <div id="upload-area" class="restrict-supervisor">
       <label style="cursor:pointer; display:block;">
-        <i class="bi bi-file-earmark-excel upload-icon"></i>
-        <h3>Cargar Reporte de Meta Ads (.xlsx)</h3>
-        <p>Tu Excel debe tener la <strong>Fecha</strong> en la columna A y columnas agrupadas por país (El Salvador / Guatemala) con Registro, 1° Depósito e Inversión.</p>
-        <span class="btn-upload"><i class="bi bi-upload"></i> Seleccionar Archivo</span>
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-file-earmark-spreadsheet-fill"></i>
+          </div>
+          <h3>¡Bienvenido a GanaPlay Smart Dashboard!</h3>
+          <p>Sube tu reporte de Meta Ads (.xlsx) para visualizar registros, FTDs e inversión por país en segundos.</p>
+          <div class="empty-state-steps">
+            <div class="empty-step"><i class="bi bi-1-circle-fill"></i> Exporta tu Excel de Meta Ads</div>
+            <div class="empty-step"><i class="bi bi-2-circle-fill"></i> Selecciona el archivo aquí</div>
+            <div class="empty-step"><i class="bi bi-3-circle-fill"></i> Visualiza tus KPIs al instante</div>
+          </div>
+          <span class="btn-upload" style="margin-top:8px;"><i class="bi bi-cloud-upload"></i> Seleccionar Archivo Excel</span>
+        </div>
+        <!-- Barra de progreso (visible al procesar) -->
+        <div id="upload-progress-bar">
+          <div class="upload-spinner" id="upload-spinner"></div>
+          <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+          <div class="progress-label" id="progress-label">Leyendo archivo...</div>
+        </div>
         <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none">
       </label>
     </div>
@@ -376,7 +550,7 @@
           <option value="">Todas las campañas</option>
         </select>
       </div>
-      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="qf-group">
         <button id="qf-yesterday" class="btn-action qf-btn" onclick="setQuickFilter('yesterday')"><i class="bi bi-calendar-day"></i> Ayer</button>
         <button id="qf-week"      class="btn-action qf-btn" onclick="setQuickFilter('week')"><i class="bi bi-calendar-week"></i> 7 días</button>
         <button id="qf-all"       class="btn-action qf-btn" onclick="setQuickFilter('all')"><i class="bi bi-calendar-range"></i> Todo</button>
@@ -435,23 +609,33 @@
       </button>
     </div>
     <div class="table-wrap">
-      <div style="overflow-x:auto;">
+      <div class="table-scroll-wrapper">
         <table>
           <thead>
             <tr>
               <th>Fecha</th>
               <th>País</th>
               <th class="col-link">Campaña</th>
-              <th class="col-clicks">Clicks</th>
+              <th class="col-clicks col-hide-mobile">Clicks</th>
               <th>Registros</th>
               <th>FTDs</th>
               <th>Inversión</th>
-              <th>CPL</th>
-              <th>CPA</th>
+              <th class="col-hide-mobile">CPL</th>
+              <th class="col-hide-mobile">CPA</th>
             </tr>
           </thead>
           <tbody id="table-body">
-            <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px;">Sube tu archivo Excel para comenzar</td></tr>
+            <tr>
+              <td colspan="9">
+                <div class="empty-state" style="padding:48px 24px;">
+                  <div class="empty-state-icon">
+                    <i class="bi bi-bar-chart-line-fill"></i>
+                  </div>
+                  <h3 style="font-size:16px;">Sin datos todavía</h3>
+                  <p>Sube tu archivo Excel usando el área de arriba para ver el detalle por día aquí.</p>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -564,6 +748,20 @@ const $ = id => document.getElementById(id);
 const fmtM   = n => typeof n === 'number' ? 'USD ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
 const fmtN   = n => typeof n === 'number' ? n.toLocaleString('es-MX') : '—';
 
+// ── Seguridad: escapar HTML para prevenir XSS ──
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ── Auth helpers ──
+function getToken() { return sessionStorage.getItem('gp_token'); }
+function authHeaders() { return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` }; }
+
 // ═══════════════════════════════════════════════════════
 // PERSISTENCIA
 // ═══════════════════════════════════════════════════════
@@ -590,7 +788,7 @@ async function saveToLocal() {
     // 3. Fallback a nuestro endpoint antiguo (Si NO estás usando Vercel)
     const res = await fetch('/api/save-data', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify(bundle)
     });
     if (res.ok) {
@@ -616,7 +814,7 @@ async function loadFromServer() {
     } 
     // 2. Fallback al servidor express temporal
     if (!bundle) {
-       const res = await fetch('/api/load-data');
+       const res = await fetch('/api/load-data', { headers: authHeaders() });
        if (res.ok) {
          bundle = await res.json();
        }
@@ -695,7 +893,7 @@ function renderStrategyHistory() {
     log.innerHTML += `
       <div class="chat-bubble ${cls}">
         <span class="chat-role">${label}</span>
-        ${msg.text}
+        ${escapeHtml(msg.text)}
         <span class="chat-time">${msg.time}</span>
       </div>
     `;
@@ -758,19 +956,24 @@ function updateStrategyDisplay() {
   renderStrategyHistory();
 }
 
-function handleLogin() {
+async function handleLogin() {
   const u = $('login-user').value.trim().toLowerCase();
   const p = $('login-pass').value.trim();
-  
-  if (u === 'admin' && p === 'admin') {
+  if (!u || !p) { $('login-error').style.display = 'block'; return; }
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    if (!res.ok) { $('login-error').style.display = 'block'; return; }
+    const { token, role } = await res.json();
     sessionStorage.setItem('gp_auth', 'true');
-    sessionStorage.setItem('gp_role', 'admin');
+    sessionStorage.setItem('gp_role', role);
+    sessionStorage.setItem('gp_token', token);
     completeLogin();
-  } else if (u === 'andres' && p === 'andres') {
-    sessionStorage.setItem('gp_auth', 'true');
-    sessionStorage.setItem('gp_role', 'supervisor');
-    completeLogin();
-  } else {
+  } catch {
     $('login-error').style.display = 'block';
   }
 }
@@ -880,23 +1083,54 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!file) return;
       console.log('📂 Archivo seleccionado:', file.name, file.size, 'bytes');
       document.getElementById('topbar-sub').textContent = '⏳ Leyendo archivo: ' + file.name;
-      
+
+      // ── Mostrar barra de progreso ──
+      const progressBar  = document.getElementById('upload-progress-bar');
+      const progressFill = document.getElementById('progress-fill');
+      const progressLbl  = document.getElementById('progress-label');
+      const spinner      = document.getElementById('upload-spinner');
+      if (progressBar) {
+        progressBar.style.display = 'block';
+        spinner.style.display = 'block';
+        progressFill.style.width = '0%';
+        progressLbl.textContent = 'Leyendo archivo: ' + file.name + '…';
+      }
+
       const reader = new FileReader();
+      reader.onprogress = function(ev) {
+        if (ev.lengthComputable && progressFill) {
+          const pct = Math.round((ev.loaded / ev.total) * 60);
+          progressFill.style.width = pct + '%';
+          progressLbl.textContent = 'Cargando… ' + pct + '%';
+        }
+      };
       reader.onload = function(ev) {
+        if (progressFill) { progressFill.style.width = '80%'; progressLbl.textContent = 'Procesando filas…'; }
         try {
           const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array', cellDates: true });
           const ws = wb.Sheets[wb.SheetNames[0]];
           const matrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
           console.log('✅ Excel leído. Filas:', matrix.length);
+          if (progressFill) { progressFill.style.width = '95%'; progressLbl.textContent = 'Construyendo dashboard…'; }
           parseMatrix(matrix);
+          if (progressFill) {
+            progressFill.style.width = '100%';
+            progressLbl.textContent = '✅ Datos cargados correctamente';
+            setTimeout(() => { progressBar.style.display = 'none'; spinner.style.display = 'none'; }, 2000);
+          }
         } catch(err) {
           console.error('❌ Error leyendo Excel:', err);
+          if (progressBar) { progressBar.style.display = 'none'; spinner.style.display = 'none'; }
           alert('❌ No se pudo leer el archivo Excel.\n\nAsegúrate de que sea un archivo .xlsx válido.');
           document.getElementById('topbar-sub').textContent = 'Error leyendo el archivo.';
         }
         e.target.value = ''; // Permitir re-subir el mismo archivo
       };
       reader.onerror = function() {
+        const progressBar = document.getElementById('upload-progress-bar');
+        const spinner     = document.getElementById('upload-spinner');
+        if (progressBar) { progressBar.style.display = 'none'; }
+        if (spinner)     { spinner.style.display = 'none'; }
         alert('❌ Error leyendo el archivo. Inténtalo de nuevo.');
       };
       reader.readAsArrayBuffer(file);
@@ -1184,15 +1418,20 @@ function updateFilterUI() {
 
   const ua = $('upload-area');
   if (ua) {
-    ua.style.padding = '14px 24px';
-    const icon = ua.querySelector('.upload-icon');
-    if (icon) icon.style.display = 'none';
-    const h3 = ua.querySelector('h3');
-    if (h3) h3.textContent = `✅ ${globalData.length} filas cargadas — Haz clic para cambiar archivo`;
-    const p = ua.querySelector('p');
-    if (p) p.style.display = 'none';
-    const btn = ua.querySelector('.btn-upload');
-    if (btn) btn.style.display = 'none';
+    // Colapsar el empty-state a una barra compacta indicando que ya hay datos
+    const emptyState = ua.querySelector('.empty-state');
+    if (emptyState) {
+      emptyState.innerHTML = `
+        <i class="bi bi-check-circle-fill" style="font-size:22px; color:var(--primary);"></i>
+        <span style="font-size:14px; font-weight:700; color:var(--text-main);">
+          ${globalData.length} filas cargadas
+        </span>
+        <span style="font-size:12px; color:var(--text-muted);">Haz clic para cambiar el archivo Excel</span>
+      `;
+      emptyState.style.flexDirection = 'row';
+      emptyState.style.padding = '14px 28px';
+      emptyState.style.gap = '12px';
+    }
   }
 }
 
@@ -1326,23 +1565,36 @@ function renderDashboard() {
       const flag    = row.Pais === 'SV' ? '🇸🇻' : '🇬🇹';
       const label   = row.Pais === 'SV' ? 'El Salvador' : 'Guatemala';
 
+      // Colores condicionales CPL (umbrales orientativos para marketing digital)
+      const cplClass = cpl <= 0 ? '' : cpl < 5  ? 'cpl-good' : cpl < 12 ? 'cpl-warn' : 'cpl-bad';
+      const cpaClass = cpa <= 0 ? '' : cpa < 15 ? 'cpl-good' : cpa < 35 ? 'cpl-warn' : 'cpl-bad';
+
       tbody.innerHTML += `
         <tr>
-          <td style="font-size:12px; font-weight:700;">${row.Fecha.split('-').reverse().join('/')}</td>
+          <td style="font-size:12px; font-weight:700; white-space:nowrap;">${row.Fecha.split('-').reverse().join('/')}</td>
           <td><span class="country-tag ${tagCls}">${flag} ${label}</span></td>
-          <td class="col-link" style="font-size:12px;">${row.Link}</td>
-          <td class="col-clicks">${fmtN(row.Clicks)}</td>
-          <td>${fmtN(row.Registros)}</td>
-          <td style="font-weight:700; color:var(--primary-dark);">${fmtN(row.Depositos)}</td>
-          <td>${row.Inversion > 0 ? fmtM(row.Inversion) : '<span style="color:var(--text-muted);font-size:11px;">Sin dato</span>'}</td>
-          <td style="font-weight:600;">${cpl > 0 ? fmtM(cpl) : '—'}</td>
-          <td style="font-weight:600;">${cpa > 0 ? fmtM(cpa) : '—'}</td>
+          <td class="col-link" style="font-size:12px; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(row.Link)}</td>
+          <td class="col-clicks col-hide-mobile" style="text-align:right;">${fmtN(row.Clicks)}</td>
+          <td style="font-weight:600; text-align:right;">${fmtN(row.Registros)}</td>
+          <td style="font-weight:700; color:var(--primary-dark); text-align:right;">${fmtN(row.Depositos)}</td>
+          <td class="inv-cell">${row.Inversion > 0 ? fmtM(row.Inversion) : '<span style="color:var(--text-muted);font-size:11px;">Sin dato</span>'}</td>
+          <td class="col-hide-mobile"><span class="${cplClass}">${cpl > 0 ? fmtM(cpl) : '—'}</span></td>
+          <td class="col-hide-mobile"><span class="${cpaClass}">${cpa > 0 ? fmtM(cpa) : '—'}</span></td>
         </tr>`;
     });
   }
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px;">No hay datos con los filtros seleccionados</td></tr>`;
+    tbody.innerHTML = `
+      <tr><td colspan="9">
+        <div class="empty-state" style="padding:36px 24px;">
+          <div class="empty-state-icon" style="width:56px;height:56px;">
+            <i class="bi bi-funnel" style="font-size:26px;"></i>
+          </div>
+          <h3 style="font-size:15px;">Sin resultados</h3>
+          <p>No hay datos con los filtros seleccionados.<br>Prueba cambiando el rango de fechas o el país.</p>
+        </div>
+      </td></tr>`;
   }
 
   const globalCPL = totalReg  > 0 ? totalInv / totalReg  : 0;
@@ -1355,6 +1607,19 @@ function renderDashboard() {
   $('val-cpl').textContent       = globalCPL > 0 ? fmtM(globalCPL) : '—';
   $('val-cpa').textContent       = globalCPA > 0 ? fmtM(globalCPA) : '—';
   $('inv-status').textContent    = totalInv > 0 ? `${filtered.filter(d=>d.Inversion>0).length} días con dato` : 'Usa "Cargar Inversión" para añadir';
+
+  // ── Colorear KPI cards de CPL y CPA según umbral ──
+  const cplKpi = $('val-cpl');
+  const cpaKpi = $('val-cpa');
+  ['kv-green','kv-blue','kv-purple','kv-dark','kpi-color-good','kpi-color-warn','kpi-color-bad'].forEach(c => {
+    cplKpi.classList.remove(c); cpaKpi.classList.remove(c);
+  });
+  if (globalCPL > 0) {
+    cplKpi.style.color = globalCPL < 5 ? '#059669' : globalCPL < 12 ? '#d97706' : '#dc2626';
+  } else { cplKpi.style.color = ''; }
+  if (globalCPA > 0) {
+    cpaKpi.style.color = globalCPA < 15 ? '#059669' : globalCPA < 35 ? '#d97706' : '#dc2626';
+  } else { cpaKpi.style.color = ''; }
 
   // ── Actualizar resumen de filtro activo ──
   const summaryEl = $('filter-summary');
