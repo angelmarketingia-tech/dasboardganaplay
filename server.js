@@ -88,13 +88,21 @@ app.use(express.json({ limit: '1mb' }));
 
 // ── Rutas ────────────────────────────────────────────────────────────────────
 
-// index.html siempre dinamico (sin cache) para evitar versiones viejas
+// Servir index.html leido en tiempo real (sin cache de Railway)
+const INDEX_PATH = path.join(__dirname, 'public', 'index.html');
 app.get('/', (req, res) => {
-  res.setHeader('Cache-Control', 'no-store');
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  try {
+    const html = fs.readFileSync(INDEX_PATH, 'utf8');
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.send(html);
+  } catch(e) {
+    res.status(500).send('Error loading app.');
+  }
 });
 
-// Otros archivos estaticos (CSS, JS, imagenes)
+// Archivos estaticos (imagenes, logos, etc.)
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 /**
