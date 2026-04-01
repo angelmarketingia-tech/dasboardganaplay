@@ -87,9 +87,6 @@ app.use(express.json({ limit: '1mb' }));
 
 // ── Rutas ────────────────────────────────────────────────────────────────────
 
-// Archivos estaticos
-app.use(express.static(path.join(__dirname, 'public')));
-
 // Sirve index.html con config Firebase inyectada desde variables de entorno
 app.get('/', (req, res) => {
   const htmlPath = path.join(__dirname, 'public', 'index.html');
@@ -107,6 +104,9 @@ app.get('/', (req, res) => {
   html = html.replace('</head>', `<script>window.__FIREBASE_CONFIG__ = ${firebaseConfig};</script>\n</head>`);
   res.send(html);
 });
+
+// Archivos estaticos (despues del route / para que no intercepte index.html)
+app.use(express.static(path.join(__dirname, 'public')));
 
 /**
  * POST /api/login
