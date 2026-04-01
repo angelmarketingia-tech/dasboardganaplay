@@ -443,6 +443,9 @@
     <input type="text" id="login-user" placeholder="Usuario" autocomplete="off" />
     <input type="password" id="login-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter') handleLogin()" />
     <button class="btn-login" onclick="handleLogin()">Ingresar</button>
+    <button type="button" onclick="handleGuestAccess()" style="width:100%;padding:11px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-size:14px;color:var(--text-muted);cursor:pointer;margin-top:4px;font-family:'Inter';transition:.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+      <i class="bi bi-eye"></i> Ver dashboard (solo lectura)
+    </button>
     <div id="login-error">Usuario o contraseña incorrectos.</div>
   </div>
 </div>
@@ -867,12 +870,13 @@ function loadFromLocal() {
 // ═══════════════════════════════════════════════════════
 function handleRoleUI() {
   const role = sessionStorage.getItem('gp_role');
-  if (role === 'supervisor') {
+  // viewer y supervisor no pueden editar datos
+  if (role === 'supervisor' || role === 'viewer') {
     document.body.classList.add('is-supervisor');
   } else {
     document.body.classList.remove('is-supervisor');
   }
-  updateStrategyDisplay(); // <-- CRÍTICO: Muestra u oculta el chat estratégito
+  updateStrategyDisplay();
 }
 function renderStrategyHistory() {
   const role = sessionStorage.getItem('gp_role');
@@ -954,6 +958,13 @@ function updateStrategyDisplay() {
   if (clearBtn) clearBtn.style.display = role === 'admin' ? 'block' : 'none';
   
   renderStrategyHistory();
+}
+
+async function handleGuestAccess() {
+  sessionStorage.setItem('gp_auth', 'true');
+  sessionStorage.setItem('gp_role', 'viewer');
+  sessionStorage.setItem('gp_token', '');
+  completeLogin();
 }
 
 async function handleLogin() {

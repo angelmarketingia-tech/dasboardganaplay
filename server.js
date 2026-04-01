@@ -55,18 +55,8 @@ function requireAuth(req, res, next) {
 }
 
 // ── CORS — solo orígenes permitidos ─────────────────────────────────────────
-const allowedOrigins = [
-  'https://dasboardganaplay-production.up.railway.app',
-  'http://localhost:3000',
-  'http://localhost:3001'
-];
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) callback(null, true);
-    else callback(new Error('Origen no permitido por CORS'));
-  },
-  methods: ['GET', 'POST']
-}));
+// CORS abierto — cualquier IP puede visualizar el dashboard
+app.use(cors({ origin: true, methods: ['GET', 'POST'] }));
 
 // ── Headers de seguridad ─────────────────────────────────────────────────────
 app.use((req, res, next) => {
@@ -126,7 +116,7 @@ const DEADLINE = process.env.DEADLINE || "2026-06-30T23:59:59-05:00";
 /**
  * GET /api/report
  */
-app.get('/api/report', apiLimiter, requireAuth, (req, res) => {
+app.get('/api/report', apiLimiter, (req, res) => {
   const results = [];
   const csvFilePath = path.join(__dirname, 'data.csv');
 
@@ -179,7 +169,7 @@ app.post('/api/save-data', apiLimiter, requireAuth, (req, res) => {
 /**
  * GET /api/load-data
  */
-app.get('/api/load-data', apiLimiter, requireAuth, (req, res) => {
+app.get('/api/load-data', apiLimiter, (req, res) => {
   try {
     if (!fs.existsSync(SYNC_DATA_PATH)) {
       return res.status(404).json({ error: 'No hay datos guardados aún.' });
