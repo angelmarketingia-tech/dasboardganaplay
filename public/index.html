@@ -12,14 +12,20 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   
   <!-- Firebase SDK -->
-  <!-- Config de Firebase generada por el servidor desde variables de entorno -->
-  <script src="/firebase-config.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getDatabase, ref, set, get, child, onValue } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
     try {
-      const cfg = window.__FIREBASE_CONFIG__;
+      const cfg = {
+        apiKey:            "AIzaSyBjUu3R_ELPwZ7O1xeOnYnsKcdmKr204ww",
+        authDomain:        "ganaplay-dashboard.firebaseapp.com",
+        databaseURL:       "https://ganaplay-dashboard-default-rtdb.firebaseio.com",
+        projectId:         "ganaplay-dashboard",
+        storageBucket:     "ganaplay-dashboard.firebasestorage.app",
+        messagingSenderId: "37525595515",
+        appId:             "1:37525595515:web:cf987b76b804d294af89de"
+      };
       if (cfg && cfg.databaseURL) {
         const app = initializeApp(cfg);
         const db  = getDatabase(app);
