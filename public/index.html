@@ -374,7 +374,10 @@
           <option value="">Todas las campañas</option>
         </select>
       </div>
-      <div style="display:flex;gap:10px;align-items:flex-end;">
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        <button class="btn-action" style="background:#f1f5f9;border:1.5px solid #cbd5e1;color:#334155;font-size:12px;padding:7px 12px;" onclick="setQuickFilter('yesterday')"><i class="bi bi-calendar-day"></i> Ayer</button>
+        <button class="btn-action" style="background:#f1f5f9;border:1.5px solid #cbd5e1;color:#334155;font-size:12px;padding:7px 12px;" onclick="setQuickFilter('week')"><i class="bi bi-calendar-week"></i> 7 días</button>
+        <button class="btn-action" style="background:#f1f5f9;border:1.5px solid #cbd5e1;color:#334155;font-size:12px;padding:7px 12px;" onclick="setQuickFilter('all')"><i class="bi bi-calendar-range"></i> Todo</button>
         <button class="btn-action btn-light" onclick="clearFilters()"><i class="bi bi-x"></i> Limpiar</button>
         <button class="btn-action btn-dark-fill restrict-supervisor" onclick="openInvModal()"><i class="bi bi-robot"></i> Cargar Inversión (IA)</button>
       </div>
@@ -1152,13 +1155,18 @@ function updateFilterUI() {
     .map(p => p === 'SV' ? '🇸🇻 El Salvador' : '🇬🇹 Guatemala').join(' + ');
   $('topbar-sub').textContent = `${globalData.length} registros cargados · ${countries}`;
 
-  // Auto-llenar rango de fechas con los datos cargados
+  // Auto-llenar filtro con el día anterior (día vencido) al cargar datos
   if (globalData.length > 0) {
     const fechas = globalData.map(d => d.Fecha).filter(Boolean).sort();
+    const lastDate = fechas[fechas.length - 1];
+    const ayer = new Date(); ayer.setDate(ayer.getDate() - 1);
+    const ayerStr = ayer.toISOString().split('T')[0];
+    // Usar ayer del calendario si hay datos; si no, el último día disponible
+    const defaultDate = fechas.includes(ayerStr) ? ayerStr : lastDate;
     const fsEl = $('filter-start');
     const feEl = $('filter-end');
-    if (fsEl && !fsEl.value) fsEl.value = fechas[0];
-    if (feEl && !feEl.value) feEl.value = fechas[fechas.length - 1];
+    if (fsEl && !fsEl.value) fsEl.value = defaultDate;
+    if (feEl && !feEl.value) feEl.value = defaultDate;
   }
 
   const ua = $('upload-area');
@@ -1182,6 +1190,32 @@ function clearFilters() {
   $('filter-start').value = '';
   $('filter-end').value = '';
   $('filter-link').value = '';
+  renderDashboard();
+}
+
+function setQuickFilter(mode) {
+  const fechas = globalData.map(d => d.Fecha).filter(Boolean).sort();
+  if (fechas.length === 0) return;
+  const lastDate = fechas[fechas.length - 1]; // último día disponible en datos
+
+  // Calcular ayer real del calendario
+  const ayer = new Date(); ayer.setDate(ayer.getDate() - 1);
+  const ayerStr = ayer.toISOString().split('T')[0];
+
+  if (mode === 'yesterday') {
+    // Usar ayer del calendario si existe en datos, si no usar el último día disponible
+    const target = fechas.includes(ayerStr) ? ayerStr : lastDate;
+    $('filter-start').value = target;
+    $('filter-end').value   = target;
+  } else if (mode === 'week') {
+    const hace7 = new Date(); hace7.setDate(hace7.getDate() - 7);
+    const hace7Str = hace7.toISOString().split('T')[0];
+    $('filter-start').value = hace7Str;
+    $('filter-end').value   = lastDate;
+  } else if (mode === 'all') {
+    $('filter-start').value = fechas[0];
+    $('filter-end').value   = lastDate;
+  }
   renderDashboard();
 }
 
@@ -1235,8 +1269,8 @@ function renderDashboard() {
     return true;
   });
 
-  // Ordenar cronológicamente (más antiguo primero)
-  filtered.sort((a,b) => a.Fecha.localeCompare(b.Fecha));
+  // Ordenar: más reciente primero (día vencido arriba)
+  filtered.sort((a,b) => b.Fecha.localeCompare(a.Fecha));
 
   let totalClicks = 0, totalReg = 0, totalFtd = 0, totalInv = 0;
   const tbody = $('table-body');
