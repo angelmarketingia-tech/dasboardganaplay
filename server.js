@@ -87,30 +87,26 @@ app.use(express.json({ limit: '1mb' }));
 
 // ── Rutas ────────────────────────────────────────────────────────────────────
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-/**
- * GET /api/config — debe ir antes de express.static
- * Entrega la configuración de Firebase desde variables de entorno
- */
-app.get('/api/config', (req, res) => {
-  res.json({
-    firebase: {
-      apiKey:            process.env.FIREBASE_API_KEY        || null,
-      authDomain:        process.env.FIREBASE_AUTH_DOMAIN    || null,
-      databaseURL:       process.env.FIREBASE_DATABASE_URL   || null,
-      projectId:         process.env.FIREBASE_PROJECT_ID     || null,
-      storageBucket:     process.env.FIREBASE_STORAGE_BUCKET || null,
-      messagingSenderId: process.env.FIREBASE_SENDER_ID      || null,
-      appId:             process.env.FIREBASE_APP_ID         || null,
-    }
-  });
-});
-
-// Archivos estaticos (despues de todas las rutas API)
+// Archivos estaticos
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Sirve index.html con config Firebase inyectada desde variables de entorno
+app.get('/', (req, res) => {
+  const htmlPath = path.join(__dirname, 'public', 'index.html');
+  let html = fs.readFileSync(htmlPath, 'utf8');
+  const firebaseConfig = JSON.stringify({
+    apiKey:            process.env.FIREBASE_API_KEY        || null,
+    authDomain:        process.env.FIREBASE_AUTH_DOMAIN    || null,
+    databaseURL:       process.env.FIREBASE_DATABASE_URL   || null,
+    projectId:         process.env.FIREBASE_PROJECT_ID     || null,
+    storageBucket:     process.env.FIREBASE_STORAGE_BUCKET || null,
+    messagingSenderId: process.env.FIREBASE_SENDER_ID      || null,
+    appId:             process.env.FIREBASE_APP_ID         || null,
+  });
+  // Inyectar config antes del </head>
+  html = html.replace('</head>', `<script>window.__FIREBASE_CONFIG__ = ${firebaseConfig};</script>\n</head>`);
+  res.send(html);
+});
 
 /**
  * POST /api/login

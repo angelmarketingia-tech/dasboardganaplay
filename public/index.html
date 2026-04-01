@@ -17,12 +17,10 @@
     import { getDatabase, ref, set, get, child, onValue } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
     try {
-      // Obtener config de Firebase desde el servidor (variables de entorno de Railway)
-      const res = await fetch('/api/config');
-      const { firebase } = await res.json();
-
-      if (firebase && firebase.databaseURL) {
-        const app = initializeApp(firebase);
+      // Config inyectada por el servidor desde variables de entorno de Railway
+      const cfg = window.__FIREBASE_CONFIG__;
+      if (cfg && cfg.databaseURL) {
+        const app = initializeApp(cfg);
         const db  = getDatabase(app);
         window.firebaseDb       = db;
         window.firebaseRef      = ref;
@@ -30,12 +28,12 @@
         window.firebaseGet      = get;
         window.firebaseChild    = child;
         window.firebaseOnValue  = onValue;
-        console.log("🔥 Firebase conectado — datos sincronizados en la nube.");
+        console.log("🔥 Firebase conectado — datos permanentes y sincronizados.");
       } else {
-        console.warn("⚠️ Firebase no configurado. Los datos se guardan solo en este servidor.");
+        console.warn("⚠️ Firebase no configurado. Datos guardados solo en el servidor.");
       }
     } catch(e) {
-      console.warn("⚠️ No se pudo conectar a Firebase:", e.message);
+      console.warn("⚠️ Error iniciando Firebase:", e.message);
     }
   </script>
 
