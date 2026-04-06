@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <!-- Firebase SDK -->
   <script type="module">
@@ -277,6 +278,8 @@
     .btn-send-chat:hover { background: var(--primary-dark); }
 
     #supervisor-badge { display: none; }
+    body.is-supervisor .restrict-supervisor { display: none !important; }
+    body.is-supervisor #supervisor-badge { display: inline-block; background: rgba(245,158,11,0.12); color: var(--warning); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid var(--warning); }
 
     /* ══════════════════════════════════════════════════════
        MEJORAS UI/UX — Agente 3
@@ -548,10 +551,12 @@
       </div>
       <div class="qf-group">
         <button id="qf-yesterday" class="btn-action qf-btn" onclick="setQuickFilter('yesterday')"><i class="bi bi-calendar-day"></i> Ayer</button>
+        <button id="qf-month"     class="btn-action qf-btn" onclick="setQuickFilter('month')"><i class="bi bi-calendar-month"></i> Mes</button>
         <button id="qf-week"      class="btn-action qf-btn" onclick="setQuickFilter('week')"><i class="bi bi-calendar-week"></i> 7 días</button>
         <button id="qf-all"       class="btn-action qf-btn" onclick="setQuickFilter('all')"><i class="bi bi-calendar-range"></i> Todo</button>
         <button class="btn-action btn-light" onclick="clearFilters()"><i class="bi bi-x"></i> Limpiar</button>
         <button class="btn-action btn-dark-fill restrict-supervisor" onclick="openInvModal()"><i class="bi bi-robot"></i> Cargar Inversión (IA)</button>
+        <button class="btn-action btn-primary-fill restrict-supervisor" onclick="openAnalyticsModal()"><i class="bi bi-graph-up-arrow"></i> Analíticas</button>
       </div>
     </div>
     <!-- RESUMEN DEL FILTRO ACTIVO -->
@@ -725,6 +730,34 @@
       </button>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL ANALITICA AVANZADA -->
+<div class="modal-overlay" id="modal-analytics">
+  <div class="modal-card" style="max-width:900px; width:95%;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="bi bi-graph-up-arrow" style="color:var(--primary);"></i> Analíticas Detalladas</div>
+      <div class="modal-close" onclick="closeAnalyticsModal()"><i class="bi bi-x"></i></div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:20px; margin-top:10px;">
+      <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:20px;">
+         <h4 style="color:var(--text-main); margin-bottom:10px; font-size:15px;"><i class="bi bi-activity"></i> Comportamiento Evolutivo (Registros vs FTDs)</h4>
+         <canvas id="chart-timeline" height="80"></canvas>
+      </div>
+      <div style="display:flex; gap:20px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:280px; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:20px;">
+           <h4 style="color:var(--text-main); margin-bottom:4px; font-size:15px;"><i class="bi bi-funnel-fill"></i> Funnel de Conversión</h4>
+           <div id="analytics-funnel" style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px;">Calculando insights...</div>
+           <canvas id="chart-funnel" height="180"></canvas>
+        </div>
+        <div style="flex:1; min-width:280px; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:20px;">
+           <h4 style="color:var(--text-main); margin-bottom:4px; font-size:15px;"><i class="bi bi-cash-stack"></i> Eficiencia de Inversión</h4>
+           <div id="analytics-insights" style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px;">Calculando insights...</div>
+           <canvas id="chart-costs" height="180"></canvas>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1074,9 +1107,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (fileInput) {
     fileInput.addEventListener('change', function(e) {
+      // Bloquear subida para supervisor
+      if (sessionStorage.getItem('gp_role') === 'supervisor') {
+        alert('Solo lectura: no tienes permisos para subir archivos.');
+        e.target.value = '';
+        return;
+      }
       const file = e.target.files[0];
       if (!file) return;
-      console.log('📂 Archivo seleccionado:', file.name, file.size, 'bytes');
+      console.log('Archivo seleccionado:', file.name, file.size, 'bytes');
       document.getElementById('topbar-sub').textContent = '⏳ Leyendo archivo: ' + file.name;
 
       // ── Mostrar barra de progreso ──
@@ -1571,23 +1610,24 @@ function updateFilterUI() {
     .map(p => p === 'SV' ? '🇸🇻 El Salvador' : '🇬🇹 Guatemala').join(' + ');
   $('topbar-sub').textContent = `${globalData.length} registros cargados · ${countries}`;
 
-  // Auto-filtrar al día anterior (día vencido) al cargar datos
+  // Auto-filtrar al mes actual completo al cargar datos
   if (globalData.length > 0) {
     const fechas = globalData.map(d => d.Fecha).filter(Boolean).sort();
     const lastDate = fechas[fechas.length - 1];
     const hoy  = new Date();
-    const ayer = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1);
-    const ayerStr = localDateStr(ayer); // hora LOCAL, no UTC
-    const defaultDate = fechas.includes(ayerStr) ? ayerStr : lastDate;
+    const hoyStr = localDateStr(hoy);
+    const primerDiaMes = localDateStr(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+    // Fin: hoy o ultimo dato disponible si es del mes actual
+    const endMonth = fechas.includes(hoyStr) ? hoyStr : (lastDate > primerDiaMes ? lastDate : hoyStr);
     const fsEl = $('filter-start');
     const feEl = $('filter-end');
-    if (fsEl && !fsEl.value) { fsEl.value = defaultDate; }
-    if (feEl && !feEl.value) { feEl.value = defaultDate; }
-    // Marcar botón "Ayer" como activo por defecto
-    _activeQF = 'yesterday';
-    ['yesterday','week','all'].forEach(k => {
+    if (fsEl && !fsEl.value) { fsEl.value = primerDiaMes; }
+    if (feEl && !feEl.value) { feEl.value = endMonth; }
+    // Marcar boton "Mes" como activo por defecto
+    _activeQF = 'month';
+    ['yesterday','month','week','all'].forEach(k => {
       const btn = $('qf-' + k);
-      if (btn) btn.classList.toggle('qf-active', k === 'yesterday');
+      if (btn) btn.classList.toggle('qf-active', k === 'month');
     });
   }
 
@@ -1622,7 +1662,7 @@ function clearFilters() {
 
 function clearActiveQF() {
   _activeQF = null;
-  ['yesterday','week','all'].forEach(k => { const b=$('qf-'+k); if(b) b.classList.remove('qf-active'); });
+  ['yesterday','month','week','all'].forEach(k => { const b=$('qf-'+k); if(b) b.classList.remove('qf-active'); });
 }
 // Helper: fecha local YYYY-MM-DD (evita desfase UTC en zonas como UTC-5)
 function localDateStr(d) {
@@ -1650,10 +1690,19 @@ function setQuickFilter(mode) {
   const ayerStr = localDateStr(ayer);
 
   if (mode === 'yesterday') {
-    // Si ayer existe en los datos úsalo; si no, el último día disponible
     const target = fechas.includes(ayerStr) ? ayerStr : lastDate;
     $('filter-start').value = target;
     $('filter-end').value   = target;
+  } else if (mode === 'month') {
+    // Mes actual completo: del 1ro del mes hasta hoy (o ultimo dato disponible)
+    const primerDiaMes = localDateStr(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+    const hoyStr = localDateStr(hoy);
+    // Inicio: el 1ro del mes o la primera fecha disponible si es posterior
+    const startMonth = fechas.find(f => f >= primerDiaMes) || primerDiaMes;
+    // Fin: hoy o el ultimo dato disponible
+    const endMonth = fechas.includes(hoyStr) ? hoyStr : (lastDate > primerDiaMes ? lastDate : hoyStr);
+    $('filter-start').value = primerDiaMes;
+    $('filter-end').value   = endMonth;
   } else if (mode === 'week') {
     const hace7 = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 7);
     $('filter-start').value = localDateStr(hace7);
@@ -1665,7 +1714,7 @@ function setQuickFilter(mode) {
 
   // Resaltar botón activo
   _activeQF = mode;
-  ['yesterday','week','all'].forEach(k => {
+  ['yesterday','month','week','all'].forEach(k => {
     const btn = $('qf-' + k);
     if (btn) btn.classList.toggle('qf-active', k === mode);
   });
@@ -2203,6 +2252,140 @@ function saveInvestments() {
   closeInvModal();
   renderDashboard();
   alert(`✅ Inversiones guardadas y sincronizadas.`);
+}
+// ═══════════════════════════════════════════════════════
+// ANALÍTICAS AVANZADAS (CHART.JS)
+// ═══════════════════════════════════════════════════════
+let analyticsCharts = {};
+
+function openAnalyticsModal() {
+  if (globalData.length === 0) {
+    alert("Sube el Excel primero para ver analíticas.");
+    return;
+  }
+  document.getElementById('modal-analytics').style.display = 'flex';
+  renderAnalytics();
+}
+
+function closeAnalyticsModal() {
+  document.getElementById('modal-analytics').style.display = 'none';
+}
+
+function renderAnalytics() {
+  const startDate = $('filter-start').value;
+  const endDate   = $('filter-end').value;
+  const selLink   = $('filter-link').value;
+
+  let filtered = globalData.filter(d => {
+    if (activeCountry !== 'ALL' && d.Pais !== activeCountry) return false;
+    if (selLink && d.Link !== selLink) return false;
+    if (startDate && d.Fecha < startDate) return false;
+    if (endDate && d.Fecha > endDate)     return false;
+    return true;
+  });
+
+  filtered.sort((a,b) => a.Fecha.localeCompare(b.Fecha));
+
+  const dayMap = new Map();
+  let sums = { clicks: 0, regs: 0, ftds: 0, inv: 0 };
+
+  filtered.forEach(row => {
+    const key = row.Fecha;
+    if (!dayMap.has(key)) dayMap.set(key, { Fecha: row.Fecha, Registros: 0, Depositos: 0, Inversion: 0, Clicks: 0 });
+    const g = dayMap.get(key);
+    g.Registros += row.Registros || 0;
+    g.Depositos += row.Depositos || 0;
+    g.Inversion += row.Inversion || 0;
+    g.Clicks    += row.Clicks || 0;
+    
+    sums.clicks += row.Clicks || 0;
+    sums.regs   += row.Registros || 0;
+    sums.ftds   += row.Depositos || 0;
+    sums.inv    += row.Inversion || 0;
+  });
+
+  const timelineData = Array.from(dayMap.values());
+  const labels = timelineData.map(d => { const p = d.Fecha.split('-'); return p[2]+'/'+p[1]; });
+  
+  if (typeof Chart === 'undefined') {
+    alert("Cargando librerías gráficas... inténtalo en 2 segundos.");
+    return;
+  }
+
+  Chart.defaults.color = '#8E99A8';
+  Chart.defaults.font.family = 'Inter';
+
+  if(analyticsCharts.timeline) analyticsCharts.timeline.destroy();
+  analyticsCharts.timeline = new Chart(document.getElementById('chart-timeline'), {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'Registros', data: timelineData.map(d => d.Registros), borderColor: '#3B82F6', backgroundColor: '#3B82F6', tension: 0.3, borderWidth: 2 },
+        { label: 'Depósitos (FTDs)', data: timelineData.map(d => d.Depositos), borderColor: '#00FF66', backgroundColor: '#00FF66', tension: 0.3, borderWidth: 2 }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'top' } },
+      scales: { x: { grid: { color: '#222935' } }, y: { grid: { color: '#222935' } } }
+    }
+  });
+
+  if(analyticsCharts.funnel) analyticsCharts.funnel.destroy();
+  analyticsCharts.funnel = new Chart(document.getElementById('chart-funnel'), {
+    type: 'bar',
+    data: {
+      labels: ['Clicks', 'Registros', 'FTDs'],
+      datasets: [{
+        data: [sums.clicks, sums.regs, sums.ftds],
+        backgroundColor: ['rgba(139, 92, 246, 0.4)', 'rgba(59, 130, 246, 0.4)', 'rgba(0, 255, 102, 0.4)'],
+        borderColor: ['#8B5CF6', '#3B82F6', '#00FF66'],
+        borderWidth: 1.5,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { display: false } }, y: { grid: { color: '#222935' } } }
+    }
+  });
+
+  const clickToReg = sums.clicks > 0 ? ((sums.regs / sums.clicks) * 100).toFixed(1) : 0;
+  const regToFtd = sums.regs > 0 ? ((sums.ftds / sums.regs) * 100).toFixed(1) : 0;
+  document.getElementById('analytics-funnel').innerHTML = 
+    `<strong>CR:</strong> <span style="color:var(--text-main);">${clickToReg}%</span> visitas registran.<br>` +
+    `<strong>Tasa Extr.:</strong> <span style="color:var(--text-main);">${regToFtd}%</span> registrados depositan.`;
+
+  if(analyticsCharts.costs) analyticsCharts.costs.destroy();
+  analyticsCharts.costs = new Chart(document.getElementById('chart-costs'), {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'CPL ($)', data: timelineData.map(d => d.Registros>0 ? d.Inversion/d.Registros : 0), borderColor: '#3B82F6', tension: 0.2 },
+        { label: 'CPA ($)', data: timelineData.map(d => d.Depositos>0 ? d.Inversion/d.Depositos : 0), borderColor: '#00FF66', tension: 0.2 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: { x: { grid: { display: false } }, y: { grid: { color: '#222935' } } }
+    }
+  });
+
+  const avgCPA = sums.ftds > 0 ? sums.inv / sums.ftds : 0;
+  const avgCPL = sums.regs > 0 ? sums.inv / sums.regs : 0;
+  // Threshold logic
+  const cplCol = avgCPL < 5 ? '#00FF66' : avgCPL < 12 ? '#FFBB00' : '#FF3366';
+  const cpaCol = avgCPA < 15 ? '#00FF66' : avgCPA < 35 ? '#FFBB00' : '#FF3366';
+
+  document.getElementById('analytics-insights').innerHTML = 
+    `Inversión Total: <strong style="color:var(--text-main);">$${sums.inv.toFixed(2)}</strong>.<br>` +
+    `CPL Promedio: <strong style="color:${cplCol}">$${avgCPL.toFixed(2)}</strong> | ` +
+    `CPA Promedio: <strong style="color:${cpaCol}">$${avgCPA.toFixed(2)}</strong>.`;
 }
 </script>
 </body>
