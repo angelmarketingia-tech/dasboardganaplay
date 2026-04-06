@@ -158,7 +158,11 @@ app.get('/api/report', apiLimiter, (req, res) => {
     });
 });
 
-const SYNC_DATA_PATH = path.join(__dirname, 'dashboard_data.json');
+// Persistencia: Usar volumen de Railway si existe, sino usar el sistema local (que se borra con cada deploy)
+const volumeDir = process.env.RAILWAY_VOLUME_MOUNT_PATH;
+const SYNC_DATA_PATH = volumeDir 
+  ? path.join(volumeDir, 'dashboard_data.json') 
+  : path.join(__dirname, 'dashboard_data.json');
 
 /**
  * POST /api/save-data

@@ -456,7 +456,7 @@
     <h2>GanaPlay</h2>
     <p>Smart Marketing Dashboard</p>
     <input type="text" id="login-user" placeholder="Usuario" autocomplete="off" />
-    <input type="password" id="login-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter') handleLogin()" />
+    <input type="text" id="login-pass" placeholder="Contraseña" style="-webkit-text-security: disc; text-security: disc;" onkeydown="if(event.key==='Enter') handleLogin()" autocomplete="new-password" spellcheck="false" />
     <button class="btn-login" onclick="handleLogin()">Ingresar</button>
     <div id="login-error">Usuario o contraseña incorrectos.</div>
   </div>

@@ -1,0 +1,40 @@
+843: let globalData   = [];       // Todos los datos parseados {Fecha, Pais, Link, Registros, Depositos, Inversion, Clicks}
+951:     const bundle = JSON.parse(raw);
+1175: // PARSEO DEL EXCEL ─ MULTI PAÍS INTELIGENTE
+1248:                   // Agregamos un marcador de nueva hoja para que parseMatrix sepa que debe buscar cabeceras de nuevo si es necesario
+1249:                   // Pero para simplificar, anexaremos todo y parseMatrix manejará la detección por fila
+1257:           parseMatrix(matrix);
+1293:       parseMatrix(matrix);
+1391:       const serial = parseInt(s);
+1407:       mo = parseInt(isoMx[2]);
+1408:       da = parseInt(isoMx[3]);
+1414:         mo = parseInt(mx[2]);
+1415:         da = parseInt(mx[1]);
+1438: function parseMatrix(fullMatrix) {
+1567:   // Funcion robusta de parseo numerico
+1568:   const parseAnyNum = (val) => {
+1580:       const n = parseFloat(s.replace(/[^0-9.\-]/g, ''));
+1586:       return parseFloat(s.replace(/[,.]/g, '').replace(/[^0-9.\-]/g, '')) || 0;
+1589:       return parseFloat(head + '.' + tail.replace(/[^0-9]/g, '')) || 0;
+1595:   let totalFtdsParsed = 0;
+1596:   let totalRegsParsed = 0;
+1611:         if (rowsProcessed < 3) console.warn('Fila ' + r + ': fecha no parseable:', fechaRaw);
+1623:       const regs   = parseAnyNum(row[colRegs]);
+1624:       const ftds   = colFtd >= 0 ? parseAnyNum(row[colFtd]) : 0;
+1625:       const clicks = colClicks >= 0 ? parseAnyNum(row[colClicks]) : 0;
+1628:       totalRegsParsed += regs;
+1629:       totalFtdsParsed += ftds;
+1652:   console.log('RESUMEN: ' + rowsProcessed + ' filas, ' + rowsSkipped + ' saltadas | Regs=' + totalRegsParsed + ' | FTDs=' + totalFtdsParsed);
+1655:   globalData = Array.from(dataMap.values());
+1665:       ? 'Depositos totales leidos: ' + totalFtdsParsed
+1670:       'Registros totales: ' + totalRegsParsed + '\n' +
+1751:   return `${parseInt(d)} ${meses[parseInt(m)-1]} ${y}`;
+1802:     globalData = [];
+1996:   // Parsear líneas → valores numéricos
+2001:     return parseFloat(clean) || 0;
+2204:   return parseFloat(clean) || 0;
+2292:   document.querySelectorAll('.inv-item-input').forEach(inp => t += parseFloat(inp.value) || 0);
+2302:     const val  = parseFloat(inp.value) || 0;
+2530:     const inv = parseFloat(row.Inversion) || 0;
+2585:             label: function(ctx) { return ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString('en-US', {minimumFractionDigits:2}); },
+2587:               const total = items.reduce((s,i) => s + i.parsed.y, 0);

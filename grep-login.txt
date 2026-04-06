@@ -1,0 +1,48 @@
+68:     /* ── LOGIN ── */
+69:     #login-screen {
+74:     .login-box {
+78:     .login-logo { width: 100px; height: 60px; object-fit: contain; margin: 0 auto 16px; display: block; }
+79:     .login-box h2 { color: var(--text-main); font-weight: 800; font-size: 22px; margin-bottom: 6px; }
+80:     .login-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; }
+81:     .login-box input {
+87:     .login-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,255,102,0.15); }
+88:     .btn-login {
+92:     .btn-login:hover { background: var(--primary-dark); transform: translateY(-1px); }
+93:     #login-error { color: var(--danger); font-size: 13px; margin-top: 12px; display: none; }
+452: <!-- LOGIN -->
+453: <div id="login-screen">
+454:   <div class="login-box">
+455:     <img class="login-logo" src="/logo.png" alt="GanaPlay" onerror="this.style.display='none'">
+458:     <input type="text" id="login-user" placeholder="Usuario" autocomplete="off" />
+459:     <input type="password" id="login-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter') handleLogin()" />
+460:     <button class="btn-login" onclick="handleLogin()">Ingresar</button>
+461:     <div id="login-error">Usuario o contraseña incorrectos.</div>
+1062: async function handleLogin() {
+1063:   const u = $('login-user').value.trim().toLowerCase();
+1064:   const p = $('login-pass').value.trim();
+1065:   if (!u || !p) { $('login-error').style.display = 'block'; return; }
+1068:     const res = await fetch('/api/login', {
+1071:       body: JSON.stringify({ username: u, password: p })
+1073:     if (!res.ok) { $('login-error').style.display = 'block'; return; }
+1078:     completeLogin();
+1080:     $('login-error').style.display = 'block';
+1084: async function completeLogin() {
+1087:   $('login-screen').style.opacity = '0';
+1089:     $('login-screen').style.display = 'none'; 
+1122:     $('login-screen').style.display = 'none';
+1187:         alert('Solo lectura: no tienes permisos para subir archivos.');
+1266:           alert('❌ No se pudo leer el archivo Excel.\n\nAsegúrate de que sea un archivo .xlsx válido.');
+1276:         alert('❌ Error leyendo el archivo. Inténtalo de nuevo.');
+1295:       alert('❌ Error leyendo el archivo Excel.');
+1653:   if (colFtd === -1) console.error('ALERTA: No se detecto columna de DEPOSITOS/FTD');
+1667:     alert('CARGA COMPLETADA\n\n' +
+1815:     alert("✅ Sistema restablecido con éxito.");
+1971:   if (globalData.length === 0) { alert('Primero sube el Excel con tus registros.'); return; }
+1994:   if (!raw) { alert('⚠️ Escribe al menos un valor de inversión.'); return; }
+2004:   if (values.length === 0) { alert('⚠️ No se encontraron valores válidos.'); return; }
+2015:     alert('⚠️ No hay fechas cargadas para el país seleccionado.\nSube primero tu Excel.');
+2034:   alert(msg);
+2329:   alert(`✅ Inversiones guardadas y sincronizadas.`);
+2338:     alert("Sube el Excel primero para ver analíticas.");
+2386:     alert("Cargando librerías gráficas... inténtalo en 2 segundos.");
+2473:     alert("Sin datos para analizar el gasto."); 

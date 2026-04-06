@@ -1,0 +1,11 @@
+    body.is-supervisor .restrict-supervisor { display: none !important; }
+    body.is-supervisor #supervisor-badge { display: inline-block; background: rgba(245,158,11,0.12); color: var(--warning); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid var(--warning); }
+    .only-supervisor { display: none !important; }
+    body.is-supervisor .only-supervisor { display: flex !important; }
+    body.is-supervisor #inv-stats-panel { display: block !important; }
+      <div class="nav-btn restrict-supervisor" title="Subir datos" onclick="document.getElementById('upload-area').scrollIntoView({behavior:'smooth'})"><i class="bi bi-cloud-upload"></i></div>
+      <div class="nav-btn only-supervisor" title="Estadísticas de Inversión" onclick="document.getElementById('inv-stats-panel').scrollIntoView({behavior:'smooth'})"><i class="bi bi-currency-dollar"></i></div>
+          <button class="restrict-supervisor" style="background:var(--danger); color:#fff; border:none; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;" onclick="resetSystemData()"><i class="bi bi-trash-fill"></i> Restablecer Todo</button>
+    <div id="upload-area" class="restrict-supervisor">
+    document.body.classList.add('is-supervisor');
+    document.body.classList.remove('is-supervisor');
