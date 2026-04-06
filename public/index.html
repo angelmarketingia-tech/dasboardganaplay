@@ -470,7 +470,7 @@
     <div class="nav-items">
       <div class="nav-btn active" title="Dashboard"><i class="bi bi-grid-fill"></i></div>
       <div class="nav-btn restrict-supervisor" title="Subir datos" onclick="document.getElementById('upload-area').scrollIntoView({behavior:'smooth'})"><i class="bi bi-cloud-upload"></i></div>
-      <div class="nav-btn" title="Añadir Inversión" onclick="openInvModal()"><i class="bi bi-currency-dollar"></i></div>
+      <div class="nav-btn restrict-supervisor" title="Añadir Inversión" onclick="openInvModal()"><i class="bi bi-currency-dollar"></i></div>
       <div class="nav-btn" title="Panel de Inversión" onclick="openInvStatsModal()"><i class="bi bi-bar-chart-steps"></i></div>
     </div>
     <div class="logout-btn" title="Cerrar sesión" onclick="handleLogout()"><i class="bi bi-box-arrow-right"></i></div>
@@ -572,7 +572,7 @@
         <button id="qf-week"      class="btn-action qf-btn" onclick="setQuickFilter('week')"><i class="bi bi-calendar-week"></i> 7 días</button>
         <button id="qf-all"       class="btn-action qf-btn" onclick="setQuickFilter('all')"><i class="bi bi-calendar-range"></i> Todo</button>
         <button class="btn-action btn-light" onclick="clearFilters()"><i class="bi bi-x"></i> Limpiar</button>
-        <button class="btn-action btn-dark-fill" onclick="openInvModal()"><i class="bi bi-robot"></i> Cargar Inversión (IA)</button>
+        <button class="btn-action btn-dark-fill restrict-supervisor" onclick="openInvModal()"><i class="bi bi-robot"></i> Cargar Inversión (IA)</button>
         <button class="btn-action btn-primary-fill" onclick="openAnalyticsModal()"><i class="bi bi-graph-up-arrow"></i> Analíticas</button>
       </div>
     </div>
@@ -2472,8 +2472,21 @@ function renderAnalytics() {
 // ═══════════════════════════════════════════════════════
 let invStatsCharts = {};
 
-function renderInvStats() {
-  const panel = document.getElementById('inv-stats-panel');
+function openInvStatsModal() {
+  if (globalData.length === 0) {
+    alert("Sin datos para analizar el gasto."); 
+    return;
+  }
+  document.getElementById('modal-inv-stats').style.display = 'flex';
+  renderInvStatsModal();
+}
+
+function closeInvStatsModal() { 
+  document.getElementById('modal-inv-stats').style.display = 'none'; 
+}
+
+function renderInvStatsModal() {
+  const panel = document.getElementById('modal-inv-stats');
   if (!panel || panel.style.display === 'none') return;
   if (globalData.length === 0) return;
 
@@ -2519,29 +2532,15 @@ function renderInvStats() {
 
   // KPIs
   $('inv-s-total').textContent = '$' + totalInv.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-  $('inv-s-total-sub').textContent = diasConDato > 0 ? diasConDato + ' dias con dato de inversion' : 'Sin datos de inversion cargados';
+  $('inv-s-total-sub').textContent = diasConDato > 0 ? diasConDato + ' dias con dato de inversion' : 'Sin datos';
   $('inv-s-sv').textContent = '$' + totalSV.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-  $('inv-s-sv-sub').textContent = totalInv > 0 ? ((totalSV/totalInv)*100).toFixed(1) + '% del total' : '—';
   $('inv-s-gt').textContent = '$' + totalGT.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-  $('inv-s-gt-sub').textContent = totalInv > 0 ? ((totalGT/totalInv)*100).toFixed(1) + '% del total' : '—';
   $('inv-s-daily').textContent = '$' + promDiario.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-  $('inv-s-daily-sub').textContent = diasConDato > 0 ? 'Promedio de ' + diasConDato + ' dias' : '—';
 
   // Labels para gráficas
   const labels = sortedDates.map(d => { const p = d.split('-'); return p[2]+'/'+p[1]; });
   const svData = sortedDates.map(d => dayCountryMap.get(d + '::SV') || 0);
   const gtData = sortedDates.map(d => dayCountryMap.get(d + '::GT') || 0);
-
-  // Acumulado
-  let accumSV = 0, accumGT = 0;
-  const accumSVArr = [], accumGTArr = [], accumTotalArr = [];
-  sortedDates.forEach(d => {
-    accumSV += dayCountryMap.get(d + '::SV') || 0;
-    accumGT += dayCountryMap.get(d + '::GT') || 0;
-    accumSVArr.push(accumSV);
-    accumGTArr.push(accumGT);
-    accumTotalArr.push(accumSV + accumGT);
-  });
 
   if (typeof Chart === 'undefined') return;
   Chart.defaults.color = '#8E99A8';
@@ -2576,32 +2575,6 @@ function renderInvStats() {
       scales: {
         x: { stacked: true, grid: { display: false } },
         y: { stacked: true, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { callback: v => '$'+v } }
-      }
-    }
-  });
-
-  // Gráfica acumulada
-  if (invStatsCharts.cumulative) invStatsCharts.cumulative.destroy();
-  invStatsCharts.cumulative = new Chart(document.getElementById('inv-chart-cumulative'), {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        { label: 'Total', data: accumTotalArr, borderColor: '#00d4aa', backgroundColor: 'rgba(0,212,170,0.08)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 2 },
-        { label: 'El Salvador', data: accumSVArr, borderColor: '#3B82F6', borderDash: [4,4], tension: 0.3, borderWidth: 1.5, pointRadius: 0 },
-        { label: 'Guatemala', data: accumGTArr, borderColor: '#8B5CF6', borderDash: [4,4], tension: 0.3, borderWidth: 1.5, pointRadius: 0 }
-      ]
-    },
-    options: {
-      responsive: true,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } },
-        tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString('en-US', {minimumFractionDigits:2}); } } }
-      },
-      scales: {
-        x: { grid: { display: false } },
-        y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { callback: v => '$'+v } }
       }
     }
   });
