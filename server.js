@@ -158,11 +158,13 @@ app.get('/api/report', apiLimiter, (req, res) => {
     });
 });
 
-// Persistencia: Usar volumen de Railway si existe, sino usar el sistema local (que se borra con cada deploy)
-const volumeDir = process.env.RAILWAY_VOLUME_MOUNT_PATH;
-const SYNC_DATA_PATH = volumeDir 
-  ? path.join(volumeDir, 'dashboard_data.json') 
-  : path.join(__dirname, 'dashboard_data.json');
+// Persistencia de Datos: Priorizar el volumen persistente de Railway si está montado en /app/data
+const MOUNT_PATH = '/app/data';
+const SYNC_DATA_PATH = fs.existsSync(MOUNT_PATH)
+  ? path.join(MOUNT_PATH, 'dashboard_data.json')
+  : (process.env.RAILWAY_VOLUME_MOUNT_PATH 
+      ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'dashboard_data.json') 
+      : path.join(__dirname, 'dashboard_data.json'));
 
 /**
  * POST /api/save-data
