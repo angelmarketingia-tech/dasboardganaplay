@@ -669,6 +669,20 @@
       <div class="modal-title"><i class="bi bi-currency-dollar" style="color:var(--primary);"></i> Panel Maestro de Inversión</div>
       <div class="modal-close" onclick="closeInvStatsModal()"><i class="bi bi-x"></i></div>
     </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; background:var(--bg); padding:12px; border-radius:10px; border:1px solid var(--border); flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; gap:6px;">
+        <button class="btn-action btn-light" onclick="setInvStatsFilter('today')" style="font-size:11px; padding:6px 10px;">Hoy</button>
+        <button class="btn-action btn-light" onclick="setInvStatsFilter('week')" style="font-size:11px; padding:6px 10px;">7 días</button>
+        <button class="btn-action btn-light" onclick="setInvStatsFilter('month')" style="font-size:11px; padding:6px 10px;">Mes</button>
+        <button class="btn-action btn-light" onclick="setInvStatsFilter('all')" style="font-size:11px; padding:6px 10px;">Todo</button>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input type="date" id="inv-modal-start" class="date-picker-input">
+        <span style="color:var(--text-muted); font-size:12px;">a</span>
+        <input type="date" id="inv-modal-end" class="date-picker-input">
+        <button class="btn-action btn-primary-fill" onclick="renderInvStatsModal()" style="font-size:11px; padding:6px 12px;"><i class="bi bi-funnel"></i> Aplicar</button>
+      </div>
+    </div>
     
     <div style="display:flex; flex-direction:column; gap:20px; margin-top:20px;">
       <!-- KPIs de inversión -->
@@ -700,27 +714,9 @@
         <canvas id="inv-chart-daily" height="80"></canvas>
       </div>
 
-      <!-- Tabla detallada -->
-      <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:20px;">
-        <h4 style="font-size:15px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
-          <i class="bi bi-table" style="color:var(--primary);"></i> Bitácora de Inversión Exacta
-        </h4>
-        <div style="overflow-x:auto;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th style="text-align:right;">🇸🇻 El Salvador</th>
-                <th style="text-align:right;">🇬🇹 Guatemala</th>
-                <th style="text-align:right;">Total Día</th>
-                <th style="text-align:right;">Acumulado Global</th>
-              </tr>
-            </thead>
-            <tbody id="inv-stats-tbody"></tbody>
-          </table>
-        </div>
-      </div>
     </div>
+  </div>
+</div>
   </div>
 </div>
 
@@ -2485,28 +2481,53 @@ function closeInvStatsModal() {
   document.getElementById('modal-inv-stats').style.display = 'none'; 
 }
 
+function setInvStatsFilter(rangeStr) {
+  const end = new Date();
+  const start = new Date();
+  end.setHours(23,59,59,999);
+  
+  if (rangeStr === 'today') {
+    start.setHours(0,0,0,0);
+  } else if (rangeStr === 'week') {
+    start.setDate(end.getDate() - 6);
+    start.setHours(0,0,0,0);
+  } else if (rangeStr === 'month') {
+    start.setDate(end.getDate() - 29);
+    start.setHours(0,0,0,0);
+  } else if (rangeStr === 'all') {
+    $('inv-modal-start').value = '';
+    $('inv-modal-end').value = '';
+    renderInvStatsModal();
+    return;
+  }
+  
+  $('inv-modal-start').value = start.toISOString().split('T')[0];
+  $('inv-modal-end').value = end.toISOString().split('T')[0];
+  renderInvStatsModal();
+}
+
 function renderInvStatsModal() {
   const panel = document.getElementById('modal-inv-stats');
   if (!panel || panel.style.display === 'none') return;
   if (globalData.length === 0) return;
 
-  // Obtener rango del filtro activo
-  const startDate = $('filter-start').value;
-  const endDate   = $('filter-end').value;
+  // Usar los inputs internos del modal para no depender del filtro global
+  const startDate = $('inv-modal-start').value;
+  const endDate   = $('inv-modal-end').value;
 
-  // Filtrar datos por fecha activa
+  // Filtrar datos estrictamente
   const filtered = globalData.filter(d => {
     if (startDate && d.Fecha < startDate) return false;
     if (endDate && d.Fecha > endDate) return false;
     return true;
   });
 
-  // Agrupar por Fecha + Pais
+  // Agrupar por Fecha + Pais y sumar inversion neta
   const dayCountryMap = new Map();
   const allDates = new Set();
 
   filtered.forEach(row => {
-    const inv = row.Inversion || 0;
+    const inv = parseFloat(row.Inversion) || 0;
     const key = row.Fecha + '::' + row.Pais;
     allDates.add(row.Fecha);
     if (!dayCountryMap.has(key)) dayCountryMap.set(key, 0);
@@ -2520,7 +2541,6 @@ function renderInvStatsModal() {
     return (sv + gt) > 0;
   });
 
-  // Totales
   let totalSV = 0, totalGT = 0;
   sortedDates.forEach(d => {
     totalSV += dayCountryMap.get(d + '::SV') || 0;
@@ -2530,14 +2550,13 @@ function renderInvStatsModal() {
   const diasConDato = daysWithInv.length;
   const promDiario = diasConDato > 0 ? totalInv / diasConDato : 0;
 
-  // KPIs
+  // KPIs asginados exactamente
   $('inv-s-total').textContent = '$' + totalInv.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-  $('inv-s-total-sub').textContent = diasConDato > 0 ? diasConDato + ' dias con dato de inversion' : 'Sin datos';
+  $('inv-s-total-sub').textContent = diasConDato > 0 ? diasConDato + ' días con dato' : 'Sin datos';
   $('inv-s-sv').textContent = '$' + totalSV.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
   $('inv-s-gt').textContent = '$' + totalGT.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
   $('inv-s-daily').textContent = '$' + promDiario.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
 
-  // Labels para gráficas
   const labels = sortedDates.map(d => { const p = d.split('-'); return p[2]+'/'+p[1]; });
   const svData = sortedDates.map(d => dayCountryMap.get(d + '::SV') || 0);
   const gtData = sortedDates.map(d => dayCountryMap.get(d + '::GT') || 0);
@@ -2546,7 +2565,6 @@ function renderInvStatsModal() {
   Chart.defaults.color = '#8E99A8';
   Chart.defaults.font.family = 'Inter';
 
-  // Gráfica barras por día
   if (invStatsCharts.daily) invStatsCharts.daily.destroy();
   invStatsCharts.daily = new Chart(document.getElementById('inv-chart-daily'), {
     type: 'bar',
@@ -2578,38 +2596,6 @@ function renderInvStatsModal() {
       }
     }
   });
-
-  // Tabla detallada
-  const tbody = document.getElementById('inv-stats-tbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  let runningTotal = 0;
-
-  sortedDates.forEach(d => {
-    const sv = dayCountryMap.get(d + '::SV') || 0;
-    const gt = dayCountryMap.get(d + '::GT') || 0;
-    const dayTotal = sv + gt;
-    runningTotal += dayTotal;
-    const dateParts = d.split('-');
-    const dateLabel = dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0];
-    const hasData = dayTotal > 0;
-    tbody.innerHTML += '<tr' + (hasData ? '' : ' style="opacity:0.4;"') + '>' +
-      '<td style="font-weight:600; white-space:nowrap;">' + dateLabel + '</td>' +
-      '<td style="text-align:right; color:var(--sv-color); font-weight:600;">' + (sv > 0 ? '$' + sv.toLocaleString('en-US', {minimumFractionDigits:2}) : '—') + '</td>' +
-      '<td style="text-align:right; color:var(--gt-color); font-weight:600;">' + (gt > 0 ? '$' + gt.toLocaleString('en-US', {minimumFractionDigits:2}) : '—') + '</td>' +
-      '<td style="text-align:right; font-weight:700;">' + (dayTotal > 0 ? '$' + dayTotal.toLocaleString('en-US', {minimumFractionDigits:2}) : '—') + '</td>' +
-      '<td style="text-align:right; font-weight:600; color:var(--primary-dark);">$' + runningTotal.toLocaleString('en-US', {minimumFractionDigits:2}) + '</td>' +
-      '</tr>';
-  });
-
-  // Fila total
-  tbody.innerHTML += '<tr class="inv-total-row-tbl">' +
-    '<td style="font-weight:800;">TOTAL</td>' +
-    '<td style="text-align:right; font-weight:800; color:var(--sv-color);">$' + totalSV.toLocaleString('en-US', {minimumFractionDigits:2}) + '</td>' +
-    '<td style="text-align:right; font-weight:800; color:var(--gt-color);">$' + totalGT.toLocaleString('en-US', {minimumFractionDigits:2}) + '</td>' +
-    '<td style="text-align:right; font-weight:800;">$' + totalInv.toLocaleString('en-US', {minimumFractionDigits:2}) + '</td>' +
-    '<td style="text-align:right; font-weight:800; color:var(--primary-dark);">$' + totalInv.toLocaleString('en-US', {minimumFractionDigits:2}) + '</td>' +
-    '</tr>';
 }
 </script>
 </body>
