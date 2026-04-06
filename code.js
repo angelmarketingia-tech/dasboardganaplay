@@ -93,12 +93,29 @@ const checkBudgetProgress = (accumulatedSpend, targetBudget, targetDate) => {
  * @returns {Object} Struct de respuesta JSON con resumen macro y detalle micro
  */
 const analyzeCampaignData = (dataset, totalBudget = 50000, deadlineString = '2026-06-30T23:59:59-05:00') => {
+  // Fase 0: Meticulous Aggregation - Agrupar por Fecha para evitar duplicados en el reporte detallado
+  const groupedMap = new Map();
+  dataset.forEach(row => {
+    const fecha = String(row.Fecha || '').trim();
+    if (!fecha) return;
+    
+    if (!groupedMap.has(fecha)) {
+      groupedMap.set(fecha, { Fecha: fecha, Inversión: 0, Registros: 0, FTDs: 0 });
+    }
+    const g = groupedMap.get(fecha);
+    g.Inversión += parseFloat(row.Inversión) || 0;
+    g.Registros += parseInt(row.Registros, 10) || 0;
+    g.FTDs      += parseInt(row.FTDs, 10) || 0;
+  });
+
+  const dailyData = Array.from(groupedMap.values()).sort((a,b) => a.Fecha.localeCompare(b.Fecha));
+
   let totalInversion = 0;
   let totalRegistros = 0;
   let totalFtds = 0;
 
   // Fase 1: Recopilar inversión y conversiones totales para promedios macro (históricos)
-  dataset.forEach(row => {
+  dailyData.forEach(row => {
     totalInversion += row.Inversión;
     totalRegistros += row.Registros;
     totalFtds += row.FTDs;
@@ -108,13 +125,12 @@ const analyzeCampaignData = (dataset, totalBudget = 50000, deadlineString = '202
   const globalCPL = calculateCPL(totalInversion, totalRegistros);
   const globalCPA = calculateCPA(totalInversion, totalFtds);
 
-  // Fase 2: Mapear el dataset aplicando Lógica de Alertas
-  const analyzetDataset = dataset.map(row => {
+  // Fase 2: Mapear el dataset agrupado aplicando Lógica de Alertas
+  const analyzetDataset = dailyData.map(row => {
     const dayCPL = calculateCPL(row.Inversión, row.Registros);
     const dayCPA = calculateCPA(row.Inversión, row.FTDs);
 
-    // Lógica de Alerta requerida:
-    // Si el CPA del día excede un 20% el promedio histórico (globalCPA), marcar como crítico.
+    // Lógica de Alerta: umbral de anomalía (20% sobre promedio)
     let status = "Saludable";
     const thresholdCPA = globalCPA * 1.20;
 
@@ -124,7 +140,7 @@ const analyzeCampaignData = (dataset, totalBudget = 50000, deadlineString = '202
 
     return {
       Fecha: row.Fecha,
-      Inversión: row.Inversión,
+      Inversión: Number(row.Inversión.toFixed(2)),
       Registros: row.Registros,
       FTDs: row.FTDs,
       CPL: Number(dayCPL.toFixed(2)),
@@ -136,7 +152,6 @@ const analyzeCampaignData = (dataset, totalBudget = 50000, deadlineString = '202
   // Fase 3: Evaluación presupuestal
   const budgetStatus = checkBudgetProgress(totalInversion, totalBudget, deadlineString);
 
-  // Retorno formateado y limpio (Salida requerida en JSON object)
   return {
     ResumenGlobal: {
       "Inversión Total": Number(totalInversion.toFixed(2)),
