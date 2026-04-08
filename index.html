@@ -1936,7 +1936,7 @@ function renderDashboard() {
   $('val-inversion').textContent = totalInv > 0 ? fmtM(totalInv) : '—';
   $('val-cpl').textContent       = globalCPL > 0 ? fmtM(globalCPL) : '—';
   $('val-cpa').textContent       = globalCPA > 0 ? fmtM(globalCPA) : '—';
-  $('inv-status').textContent    = totalInv > 0 ? `${filtered.filter(d=>d.Inversion>0).length} días con dato` : 'Usa "Cargar Inversión" para añadir';
+  $('inv-status').textContent    = totalInv > 0 ? `${new Set(filtered.filter(d=>d.Inversion>0).map(d=>d.Fecha)).size} días con dato` : 'Usa "Cargar Inversión" para añadir';
 
   // ── Colorear KPI cards de CPL y CPA según umbral ──
   const cplKpi = $('val-cpl');
