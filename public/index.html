@@ -68,79 +68,84 @@
     /* ── LOGIN ── */
     #login-screen {
       position: fixed; inset: 0; z-index: 9999;
-      background: #06080A;
+      background: radial-gradient(ellipse at 50% 45%, #080F09 0%, #05070A 55%, #020304 100%);
       display: flex; align-items: center; justify-content: center;
       transition: opacity .5s; overflow: hidden;
     }
+    /* Diamond crosshatch — casino felt texture */
     #login-screen::before {
       content: '';
       position: absolute; inset: 0;
       background-image:
-        linear-gradient(rgba(0,255,102,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,255,102,0.04) 1px, transparent 1px);
-      background-size: 44px 44px;
-      animation: lgrid 25s linear infinite;
+        repeating-linear-gradient( 45deg, rgba(0,255,102,0.018) 0, rgba(0,255,102,0.018) 1px, transparent 0, transparent 50%),
+        repeating-linear-gradient(-45deg, rgba(0,255,102,0.018) 0, rgba(0,255,102,0.018) 1px, transparent 0, transparent 50%);
+      background-size: 28px 28px;
     }
     #login-screen::after {
       content: '';
-      position: absolute; width: 700px; height: 700px;
-      background: radial-gradient(circle, rgba(0,255,102,0.055) 0%, transparent 65%);
+      position: absolute; width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(0,255,102,0.05) 0%, transparent 60%);
       top: 50%; left: 50%; transform: translate(-50%, -50%);
       pointer-events: none;
-    }
-    @keyframes lgrid {
-      0%   { background-position: 0 0; }
-      100% { background-position: 44px 44px; }
     }
     .login-wrap {
       position: relative; z-index: 1;
       display: flex; width: 100%; max-width: 880px; margin: 16px;
       border-radius: 24px; overflow: hidden;
-      box-shadow: 0 40px 90px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,255,102,0.1);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.85), 0 0 0 1px rgba(0,255,102,0.1);
     }
     /* ── Brand panel ── */
     .login-brand {
-      flex: 1; padding: 60px 48px;
-      background: linear-gradient(160deg, #0B0E14 0%, #0D1219 100%);
-      border-right: 1px solid rgba(0,255,102,0.1);
+      flex: 1; padding: 64px 52px;
+      background: linear-gradient(155deg, #07100A 0%, #090E0B 60%, #0A1209 100%);
+      border-right: 1px solid rgba(0,255,102,0.12);
       display: flex; flex-direction: column; justify-content: center;
       position: relative; overflow: hidden;
     }
+    /* Same diamond pattern tighter on brand panel */
+    .login-brand::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        repeating-linear-gradient( 45deg, rgba(0,255,102,0.03) 0, rgba(0,255,102,0.03) 1px, transparent 0, transparent 50%),
+        repeating-linear-gradient(-45deg, rgba(0,255,102,0.03) 0, rgba(0,255,102,0.03) 1px, transparent 0, transparent 50%);
+      background-size: 20px 20px;
+    }
+    /* Glow bottom-right corner */
     .login-brand::after {
       content: '';
-      position: absolute; bottom: -120px; right: -120px;
-      width: 340px; height: 340px;
-      background: radial-gradient(circle, rgba(0,255,102,0.07) 0%, transparent 65%);
+      position: absolute; bottom: -110px; right: -90px;
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, rgba(0,255,102,0.1) 0%, transparent 65%);
       pointer-events: none;
     }
-    .login-brand-badge {
-      display: inline-flex; align-items: center; gap: 7px;
-      background: rgba(0,255,102,0.08); border: 1px solid rgba(0,255,102,0.22);
-      color: #00FF66; font-size: 10.5px; font-weight: 700;
-      letter-spacing: 1.6px; text-transform: uppercase;
-      padding: 6px 14px; border-radius: 100px;
-      margin-bottom: 36px; width: fit-content;
-    }
+    /* Floating card-suit symbols */
+    .lb-suits { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .lb-suit   { position: absolute; color: #00FF66; line-height: 1; user-select: none; }
+    .lb-suit-1 { top: 5%;    left: 7%;   font-size: 108px; opacity: 0.04; }
+    .lb-suit-2 { top: 7%;    right: 8%;  font-size: 72px;  opacity: 0.028; }
+    .lb-suit-3 { bottom: 8%; left: 9%;   font-size: 80px;  opacity: 0.032; }
+    .lb-suit-4 { bottom: 5%; right: 7%;  font-size: 96px;  opacity: 0.036; }
     .login-brand-logo {
-      width: 130px; height: auto; object-fit: contain; margin-bottom: 28px;
+      width: 150px; height: auto; object-fit: contain; margin-bottom: 26px;
+      position: relative; z-index: 1;
+      filter: drop-shadow(0 0 18px rgba(0,255,102,0.3));
     }
     .login-brand h1 {
-      font-size: 30px; font-weight: 900; color: #F3F4F6;
-      line-height: 1.25; margin: 0 0 16px;
+      font-size: 26px; font-weight: 900; color: #F3F4F6;
+      line-height: 1.3; margin: 0 0 10px;
+      position: relative; z-index: 1; letter-spacing: -0.3px;
     }
     .login-brand h1 span { color: #00FF66; }
-    .login-brand-desc {
-      color: #8E99A8; font-size: 14.5px; line-height: 1.75;
-      max-width: 270px; margin: 0;
-    }
-    .login-divider {
-      width: 48px; height: 3px; border-radius: 2px;
+    .login-brand-line {
+      width: 36px; height: 2px; border-radius: 1px;
       background: linear-gradient(90deg, #00FF66, transparent);
-      margin: 32px 0;
+      margin: 16px 0 18px; position: relative; z-index: 1;
     }
-    .login-stats { display: flex; gap: 36px; }
-    .login-stat-val { font-size: 24px; font-weight: 900; color: #00FF66; line-height: 1; }
-    .login-stat-lbl { font-size: 11px; color: #8E99A8; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 4px; }
+    .login-brand-desc {
+      color: #6B7A89; font-size: 13px; line-height: 1.75;
+      max-width: 250px; margin: 0; position: relative; z-index: 1;
+    }
     /* ── Form panel ── */
     .login-form-panel {
       width: 400px; background: #10141A; padding: 60px 48px;
@@ -550,23 +555,16 @@
   <div class="login-wrap">
     <!-- Panel izquierdo: branding -->
     <div class="login-brand">
-      <div class="login-brand-badge">
-        <i class="bi bi-shield-check-fill"></i> Panel Seguro
+      <div class="lb-suits">
+        <span class="lb-suit lb-suit-1">♠</span>
+        <span class="lb-suit lb-suit-2">♦</span>
+        <span class="lb-suit lb-suit-3">♣</span>
+        <span class="lb-suit lb-suit-4">♥</span>
       </div>
       <img class="login-brand-logo" src="/logo.png" alt="GanaPlay" onerror="this.style.display='none'">
-      <h1>Smart Marketing<br><span>Dashboard</span></h1>
-      <p class="login-brand-desc">Gestiona campañas, inversiones y métricas de rendimiento en tiempo real.</p>
-      <div class="login-divider"></div>
-      <div class="login-stats">
-        <div class="login-stat">
-          <div class="login-stat-val">2</div>
-          <div class="login-stat-lbl">Países</div>
-        </div>
-        <div class="login-stat">
-          <div class="login-stat-val">100%</div>
-          <div class="login-stat-lbl">Datos reales</div>
-        </div>
-      </div>
+      <h1>Apuestas &amp; Casino<br><span>Marketing Intelligence</span></h1>
+      <div class="login-brand-line"></div>
+      <p class="login-brand-desc">Plataforma de análisis y rendimiento para operadores deportivos y casino en línea.</p>
     </div>
     <!-- Panel derecho: formulario -->
     <div class="login-form-panel">
