@@ -67,30 +67,126 @@
 
     /* ── LOGIN ── */
     #login-screen {
-      position: fixed; inset: 0;
-      background: linear-gradient(135deg, #090B10 0%, #10141A 100%);
-      display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity .5s;
+      position: fixed; inset: 0; z-index: 9999;
+      background: #06080A;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity .5s; overflow: hidden;
     }
-    .login-box {
-      background: var(--card-bg); padding: 44px 40px; border-radius: 20px; text-align: center;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.3); width: 100%; max-width: 420px;
+    #login-screen::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,255,102,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,102,0.04) 1px, transparent 1px);
+      background-size: 44px 44px;
+      animation: lgrid 25s linear infinite;
     }
-    .login-logo { width: 100px; height: 60px; object-fit: contain; margin: 0 auto 16px; display: block; }
-    .login-box h2 { color: var(--text-main); font-weight: 800; font-size: 22px; margin-bottom: 6px; }
-    .login-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; }
-    .login-box input {
-      width: 100%; padding: 13px 16px; margin-bottom: 14px;
-      background: var(--bg); color: var(--text-main);
-      border: 1.5px solid var(--border); border-radius: 10px; font-size: 15px;
-      font-family: 'Inter'; outline: none; transition: border .25s;
+    #login-screen::after {
+      content: '';
+      position: absolute; width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(0,255,102,0.055) 0%, transparent 65%);
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      pointer-events: none;
     }
-    .login-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,255,102,0.15); }
+    @keyframes lgrid {
+      0%   { background-position: 0 0; }
+      100% { background-position: 44px 44px; }
+    }
+    .login-wrap {
+      position: relative; z-index: 1;
+      display: flex; width: 100%; max-width: 880px; margin: 16px;
+      border-radius: 24px; overflow: hidden;
+      box-shadow: 0 40px 90px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,255,102,0.1);
+    }
+    /* ── Brand panel ── */
+    .login-brand {
+      flex: 1; padding: 60px 48px;
+      background: linear-gradient(160deg, #0B0E14 0%, #0D1219 100%);
+      border-right: 1px solid rgba(0,255,102,0.1);
+      display: flex; flex-direction: column; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .login-brand::after {
+      content: '';
+      position: absolute; bottom: -120px; right: -120px;
+      width: 340px; height: 340px;
+      background: radial-gradient(circle, rgba(0,255,102,0.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .login-brand-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(0,255,102,0.08); border: 1px solid rgba(0,255,102,0.22);
+      color: #00FF66; font-size: 10.5px; font-weight: 700;
+      letter-spacing: 1.6px; text-transform: uppercase;
+      padding: 6px 14px; border-radius: 100px;
+      margin-bottom: 36px; width: fit-content;
+    }
+    .login-brand-logo {
+      width: 130px; height: auto; object-fit: contain; margin-bottom: 28px;
+    }
+    .login-brand h1 {
+      font-size: 30px; font-weight: 900; color: #F3F4F6;
+      line-height: 1.25; margin: 0 0 16px;
+    }
+    .login-brand h1 span { color: #00FF66; }
+    .login-brand-desc {
+      color: #8E99A8; font-size: 14.5px; line-height: 1.75;
+      max-width: 270px; margin: 0;
+    }
+    .login-divider {
+      width: 48px; height: 3px; border-radius: 2px;
+      background: linear-gradient(90deg, #00FF66, transparent);
+      margin: 32px 0;
+    }
+    .login-stats { display: flex; gap: 36px; }
+    .login-stat-val { font-size: 24px; font-weight: 900; color: #00FF66; line-height: 1; }
+    .login-stat-lbl { font-size: 11px; color: #8E99A8; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 4px; }
+    /* ── Form panel ── */
+    .login-form-panel {
+      width: 400px; background: #10141A; padding: 60px 48px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .login-form-title { font-size: 22px; font-weight: 800; color: #F3F4F6; margin: 0 0 6px; }
+    .login-form-sub   { color: #8E99A8; font-size: 14px; margin: 0 0 36px; }
+    .login-field { margin-bottom: 18px; }
+    .login-field label {
+      display: block; font-size: 11.5px; font-weight: 600;
+      color: #8E99A8; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .login-input-wrap { position: relative; }
+    .login-input-wrap .li-icon {
+      position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+      color: #8E99A8; font-size: 16px; pointer-events: none; transition: color .25s;
+    }
+    .login-input-wrap input {
+      width: 100%; padding: 13px 16px 13px 44px; box-sizing: border-box;
+      background: #06080A; color: #F3F4F6;
+      border: 1.5px solid #222935; border-radius: 12px;
+      font-size: 15px; font-family: 'Inter'; outline: none;
+      transition: border .25s, box-shadow .25s;
+    }
+    .login-input-wrap input:focus { border-color: #00FF66; box-shadow: 0 0 0 3px rgba(0,255,102,0.13); }
+    .login-input-wrap:focus-within .li-icon { color: #00FF66; }
     .btn-login {
-      width: 100%; padding: 14px; background: var(--primary); color: white; border: none;
-      border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: .25s;
+      width: 100%; padding: 14px; margin-top: 6px;
+      background: linear-gradient(135deg, #00FF66 0%, #00CC52 100%);
+      color: #06080A; border: none; border-radius: 12px;
+      font-size: 15.5px; font-weight: 800; cursor: pointer; font-family: 'Inter';
+      transition: all .25s; box-shadow: 0 4px 22px rgba(0,255,102,0.28);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
     }
-    .btn-login:hover { background: var(--primary-dark); transform: translateY(-1px); }
-    #login-error { color: var(--danger); font-size: 13px; margin-top: 12px; display: none; }
+    .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,255,102,0.38); }
+    .btn-login:active { transform: translateY(0); }
+    #login-error {
+      color: #FF3366; font-size: 13px; margin-top: 14px; display: none;
+      background: rgba(255,51,102,0.08); border: 1px solid rgba(255,51,102,0.2);
+      padding: 10px 14px; border-radius: 10px; text-align: center;
+    }
+    @media (max-width: 680px) {
+      .login-brand { display: none; }
+      .login-wrap { max-width: 420px; }
+      .login-form-panel { width: 100%; padding: 48px 32px; }
+    }
 
     /* ── LAYOUT ── */
     #app-container { display: none; width: 100%; min-height: 100vh; }
@@ -451,14 +547,50 @@
 
 <!-- LOGIN -->
 <div id="login-screen">
-  <div class="login-box">
-    <img class="login-logo" src="/logo.png" alt="GanaPlay" onerror="this.style.display='none'">
-    <h2>GanaPlay</h2>
-    <p>Smart Marketing Dashboard</p>
-    <input type="text" id="login-user" placeholder="Usuario" autocomplete="off" />
-    <input type="password" id="login-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter') handleLogin()" />
-    <button class="btn-login" onclick="handleLogin()">Ingresar</button>
-    <div id="login-error">Usuario o contraseña incorrectos.</div>
+  <div class="login-wrap">
+    <!-- Panel izquierdo: branding -->
+    <div class="login-brand">
+      <div class="login-brand-badge">
+        <i class="bi bi-shield-check-fill"></i> Panel Seguro
+      </div>
+      <img class="login-brand-logo" src="/logo.png" alt="GanaPlay" onerror="this.style.display='none'">
+      <h1>Smart Marketing<br><span>Dashboard</span></h1>
+      <p class="login-brand-desc">Gestiona campañas, inversiones y métricas de rendimiento en tiempo real.</p>
+      <div class="login-divider"></div>
+      <div class="login-stats">
+        <div class="login-stat">
+          <div class="login-stat-val">2</div>
+          <div class="login-stat-lbl">Países</div>
+        </div>
+        <div class="login-stat">
+          <div class="login-stat-val">100%</div>
+          <div class="login-stat-lbl">Datos reales</div>
+        </div>
+      </div>
+    </div>
+    <!-- Panel derecho: formulario -->
+    <div class="login-form-panel">
+      <h2 class="login-form-title">Bienvenido</h2>
+      <p class="login-form-sub">Ingresa tus credenciales para continuar</p>
+      <div class="login-field">
+        <label>Usuario</label>
+        <div class="login-input-wrap">
+          <i class="bi bi-person-fill li-icon"></i>
+          <input type="text" id="login-user" placeholder="Tu usuario" autocomplete="off" />
+        </div>
+      </div>
+      <div class="login-field">
+        <label>Contraseña</label>
+        <div class="login-input-wrap">
+          <i class="bi bi-lock-fill li-icon"></i>
+          <input type="password" id="login-pass" placeholder="Tu contraseña" onkeydown="if(event.key==='Enter') handleLogin()" />
+        </div>
+      </div>
+      <button class="btn-login" onclick="handleLogin()">
+        <i class="bi bi-box-arrow-in-right"></i> Ingresar
+      </button>
+      <div id="login-error"><i class="bi bi-exclamation-circle-fill"></i> Usuario o contraseña incorrectos.</div>
+    </div>
   </div>
 </div>
 
