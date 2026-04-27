@@ -909,15 +909,29 @@
 
     <!-- PANEL TEXTO -->
     <div id="panel-texto" style="display:none;">
+      <!-- Subsección 1: Cargar por rango de fechas -->
       <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px;">
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
-          Pega los valores de inversión <strong>en orden cronológico</strong> (del día 1 al 30), uno por línea.<br>
-          El sistema los asignará automáticamente a cada fecha del país seleccionado.
+          <strong>Opción 1:</strong> Pega los valores de inversión <strong>en orden cronológico</strong>, uno por línea.<br>
+          El sistema los asignará automáticamente a cada fecha disponible (funciona con cualquier rango de fechas, no solo 1-30).
         </p>
-        <textarea id="text-inv-input" rows="10" placeholder="860.68&#10;679.37&#10;846.48&#10;572.76&#10;..." 
+        <textarea id="text-inv-input" rows="8" placeholder="860.68&#10;679.37&#10;846.48&#10;572.76&#10;..."
           style="width:100%; padding:12px; background:var(--card-bg); color:var(--text-main); border:1.5px solid var(--border); border-radius:8px; font-family:monospace; font-size:14px; resize:vertical; outline:none;"></textarea>
         <button onclick="applyTextInvestment()" style="margin-top:12px; width:100%; padding:12px; background:var(--primary); color:#000; border:none; border-radius:8px; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(0,255,102,0.2);">
           <i class="bi bi-arrow-right-circle-fill"></i> Mapear valores a fechas
+        </button>
+      </div>
+
+      <!-- Subsección 2: Cargar manualmente por fecha -->
+      <div style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:16px;">
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">
+          <strong>Opción 2:</strong> Carga manual por cada fecha disponible. Ingresa valores separados para SV y GT.
+        </p>
+        <div id="manual-dates-container" style="max-height:400px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:12px; background:var(--card-bg); margin-bottom:14px;">
+          <p style="text-align:center; color:var(--text-muted); font-size:12px;">Selecciona un país primero para ver fechas disponibles...</p>
+        </div>
+        <button onclick="saveManualInvestments()" style="width:100%; padding:12px; background:var(--primary); color:#000; border:none; border-radius:8px; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(0,255,102,0.2);">
+          <i class="bi bi-check-lg"></i> Guardar Carga Manual
         </button>
       </div>
     </div>
@@ -2173,6 +2187,104 @@ function setOcrCountry(code) {
     if (c === code && c === 'BOTH') { btn.style.background = 'var(--primary)'; btn.style.color='white'; btn.style.borderColor='var(--primary)'; }
     else if (c !== code) { btn.style.background=''; btn.style.color=''; btn.style.borderColor=''; }
   });
+  renderAvailableDates(); // Renderizar fechas disponibles cuando cambia país
+}
+
+function renderAvailableDates() {
+  const container = $('manual-dates-container');
+
+  // Usar siempre el mes ACTUAL
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+  const monthYear = `${currentYear}-${currentMonth}`;
+
+  // Generar TODOS los días del mes (1-30 o según días del mes)
+  const [yr, mo] = monthYear.split('-');
+  const daysInMonth = new Date(parseInt(yr), parseInt(mo), 0).getDate();
+  const allDates = [];
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dd = String(day).padStart(2, '0');
+    allDates.push(`${yr}-${mo}-${dd}`);
+  }
+
+  let html = '';
+  const countriesToRender = ocrCountry === 'BOTH' ? ['SV', 'GT'] : [ocrCountry];
+
+  allDates.forEach(date => {
+    // Convertir a formato DD/MM/YYYY para mostrar
+    const parts = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const displayDate = parts ? `${parts[3]}/${parts[2]}/${parts[1]}` : date;
+
+    // Verificar si esta fecha tiene datos en globalData
+    const hasData = globalData.some(d => d.Fecha === date);
+    const dataBg = hasData ? 'var(--card-bg)' : 'rgba(0,0,0,0.2)';
+    const dateColor = hasData ? 'var(--text-main)' : 'var(--text-muted)';
+
+    countriesToRender.forEach(pais => {
+      const key = `${pais}::${date}`;
+      const existing = manualInvestments[key] || '';
+      const flag = pais === 'SV' ? '🇸🇻 SV' : '🇬🇹 GT';
+      const indicator = hasData ? '' : ' <span style="font-size:10px; color:var(--text-muted);">(sin datos)</span>';
+
+      html += `
+        <div style="display:flex; gap:12px; align-items:center; padding:10px; border-bottom:1px solid var(--border); background:${dataBg}; margin-bottom:4px; border-radius:6px;">
+          <div style="flex:1;">
+            <div style="font-weight:700; color:${dateColor}; font-size:14px;">${displayDate} <span style="font-size:11px; color:var(--text-muted);">${flag}</span>${indicator}</div>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <span style="color:var(--primary-dark); font-weight:700; font-size:12px;">USD</span>
+            <input type="number" class="manual-inv-input" data-key="${key}" placeholder="0.00"
+              value="${existing}" min="0" step="0.01"
+              style="width:100px; padding:8px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text-main); font-family:monospace; text-align:right;">
+          </div>
+        </div>`;
+    });
+  });
+
+  container.innerHTML = html;
+}
+
+function saveManualInvestments() {
+  const inputs = document.querySelectorAll('.manual-inv-input');
+  let count = 0;
+
+  inputs.forEach(inp => {
+    const key = inp.getAttribute('data-key');
+    const val = parseFloat(inp.value) || 0;
+
+    if (val > 0) {
+      manualInvestments[key] = val;
+      count++;
+    }
+  });
+
+  if (count === 0) {
+    alert('⚠️ Ingresa al menos un valor de inversión.');
+    return;
+  }
+
+  // Distribuir inversión en globalData
+  const uniquePaisDates = [...new Set(Object.keys(manualInvestments))];
+  uniquePaisDates.forEach(key => {
+    const [pais, date] = key.split('::');
+    const spend = manualInvestments[key] || 0;
+    const rows = globalData.filter(d => d.Pais === pais && d.Fecha === date);
+
+    const totalRegs = rows.reduce((s, r) => s + r.Registros, 0);
+    rows.forEach(r => {
+      if (totalRegs > 0) {
+        r.Inversion = spend * (r.Registros / totalRegs);
+      } else {
+        r.Inversion = spend / Math.max(rows.length, 1);
+      }
+    });
+  });
+
+  saveToLocal();
+  closeInvModal();
+  renderDashboard();
+  alert(`✅ ${count} inversiones guardadas y sincronizadas.`);
 }
 
 function resetOcr() {
@@ -2266,35 +2378,53 @@ async function runOCR() {
  */
 function extractInversionFromOcrText(rawText) {
   console.log('📝 OCR texto origin:\n', rawText);
-  const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const lines = rawText.split('\n');
   const ocrData = [];
 
-  for (const line of lines) {
-    // 1. Detectar Fecha (DD/MM/YYYY)
-    const dateMatch = line.match(/(\d{1,2})\s*[\/\-\.]\s*(\d{1,2})\s*[\/\-\.]\s*(\d{2,4})/);
-    if (!dateMatch) continue;
+  // Regex mejorado para capturar TODAS las fechas posibles
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
 
-    const dd = dateMatch[1].padStart(2, '0');
-    const mn = dateMatch[2].padStart(2, '0');
-    let year = dateMatch[3];
-    if (year.length === 2) year = '20' + year;
-    const dateNorm = `${year}-${mn}-${dd}`; // YYYY-MM-DD
-
-    // 2. Detectar Montos (números decimales con punto o coma)
-    const moneyRegex = /[\d]{1,3}(?:[,.\s\u00a0][\d]{3})*(?:[.,\s][\d]{2})/g;
-    const matches = line.match(moneyRegex);
-    
-    if (matches && matches.length >= 1) {
-      const vals = matches.map(m => normalizeMoney(m.replace(/\s/g,'.'))).filter(v => v > 0);
-      if (vals.length > 0) {
-        ocrData.push({
-          date: dateNorm,
-          sv: vals[0] || 0,
-          gt: vals[1] || 0
-        });
-        console.log(`✅ IA: ${dateNorm} -> SV: $${vals[0] || 0}, GT: $${vals[1] || 0}`);
-      }
+    // Detectar TODAS las fechas en la línea (puede haber múltiples)
+    const dateRegex = /(\d{1,2})\s*[\/\-\.]\s*(\d{1,2})\s*[\/\-\.]\s*(\d{2,4})/g;
+    let dateMatch;
+    const dateMatches = [];
+    while ((dateMatch = dateRegex.exec(line)) !== null) {
+      dateMatches.push(dateMatch);
     }
+
+    if (dateMatches.length === 0) continue;
+
+    // Extraer todos los montos de la línea - regex más flexible
+    const moneyRegex = /\d+(?:[.,]\d{2,3})?(?:\s*[.,]\s*\d{2,3})?/g;
+    const moneyMatches = line.match(moneyRegex) || [];
+    const vals = moneyMatches.map(m => normalizeMoney(m)).filter(v => v >= 10); // Solo valores >= 10
+
+    // Procesar cada fecha
+    dateMatches.forEach((dm) => {
+      const day = parseInt(dm[1]);
+      const month = parseInt(dm[2]);
+      let year = dm[3];
+
+      if (day < 1 || day > 31 || month < 1 || month > 12) return;
+
+      if (year.length === 2) year = '20' + year;
+      const dd = String(day).padStart(2, '0');
+      const mn = String(month).padStart(2, '0');
+      const dateNorm = `${year}-${mn}-${dd}`;
+
+      let sv = 0, gt = 0;
+      if (vals.length > 0) {
+        sv = vals[0] || 0;
+        gt = vals[1] || vals[0] || 0;
+      }
+
+      if (sv > 0 || gt > 0) {
+        ocrData.push({ date: dateNorm, sv, gt });
+        console.log(`✅ IA: ${dateNorm} -> SV: $${sv}, GT: $${gt}`);
+      }
+    });
   }
 
   // Eliminar duplicados y limpiar totales

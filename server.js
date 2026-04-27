@@ -15,7 +15,7 @@ const rateLimit = require('express-rate-limit');
 const { analyzeCampaignData } = require('./code');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
 
 // ── Credenciales via variables de entorno (nunca hardcodeadas) ──────────────
