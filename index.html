@@ -690,7 +690,7 @@
         <span class="filter-label">Fecha Final</span>
         <input type="date" id="filter-end" class="filter-input" onchange="clearActiveQF();renderDashboard()">
       </div>
-      <div class="filter-group">
+      <div class="filter-group" style="display:none;">
         <span class="filter-label">Campaña / Link</span>
         <select id="filter-link" class="filter-input" onchange="renderDashboard()">
           <option value="">Todas las campañas</option>
@@ -762,11 +762,8 @@
           <thead>
             <tr>
               <th>Fecha</th>
-              <th>País</th>
-              <th class="col-link">Campaña</th>
-              <th class="col-clicks col-hide-mobile">Clicks</th>
-              <th>Registros</th>
-              <th>FTDs</th>
+              <th>Cantidad Usuario Registro</th>
+              <th>Cantidad Primer Deposito</th>
               <th>Inversión</th>
               <th class="col-hide-mobile">CPL</th>
               <th class="col-hide-mobile">CPA</th>
@@ -774,7 +771,7 @@
           </thead>
           <tbody id="table-body">
             <tr>
-              <td colspan="9">
+              <td colspan="6">
                 <div class="empty-state" style="padding:48px 24px;">
                   <div class="empty-state-icon">
                     <i class="bi bi-bar-chart-line-fill"></i>
@@ -1766,9 +1763,9 @@ function parseMatrix(fullMatrix) {
       totalRegsParsed += regs;
       totalFtdsParsed += ftds;
 
-      const key = `${fecha}::${pais}::${link}`;
+      const key = `${fecha}`;
       if (!dataMap.has(key)) {
-        dataMap.set(key, { Fecha: fecha, Pais: pais, Link: link, Registros: 0, Depositos: 0, Inversion: 0, Clicks: 0 });
+        dataMap.set(key, { Fecha: fecha, Registros: 0, Depositos: 0, Inversion: 0, Clicks: 0 });
         sessionUpdatedKeys.add(key);
       } else if (!sessionUpdatedKeys.has(key)) {
         const rec = dataMap.get(key);
@@ -1977,30 +1974,25 @@ function renderDashboard() {
   if (!globalData || globalData.length === 0) return;
   const startDate = $('filter-start').value; // YYYY-MM-DD
   const endDate   = $('filter-end').value;   // YYYY-MM-DD
-  const selLink   = $('filter-link').value;
 
   // Filtrar datos
   let filtered = globalData.filter(d => {
-    // 1. Filtro de País
-    if (activeCountry !== 'ALL' && d.Pais !== activeCountry) return false;
-    // 2. Filtro de Link/Campaña
-    if (selLink && d.Link !== selLink) return false;
-    // 3. Filtro de fechas
+    // 1. Filtro de fechas
     if (startDate && d.Fecha < startDate) return false;
     if (endDate && d.Fecha > endDate)     return false;
-    // 4. No ocultar nada (que no falte ninguno según lo pedido)
+    // 2. No ocultar nada (que no falte ninguno según lo pedido)
     return true;
   });
 
   // Ordenar: menor fecha primero (cronológico ascendente)
   filtered.sort((a,b) => a.Fecha.localeCompare(b.Fecha));
 
-  // Agrupar por Fecha + País: sumar todos los links del mismo día y país
+  // Agrupar por Fecha: sumar todos los links del mismo día
   const dayMap = new Map();
   filtered.forEach(row => {
-    const key = `${row.Fecha}::${row.Pais}`;
+    const key = `${row.Fecha}`;
     if (!dayMap.has(key)) {
-      dayMap.set(key, { Fecha: row.Fecha, Pais: row.Pais, Registros: 0, Depositos: 0, Inversion: 0, Clicks: 0 });
+      dayMap.set(key, { Fecha: row.Fecha, Registros: 0, Depositos: 0, Inversion: 0, Clicks: 0 });
     }
     const g = dayMap.get(key);
     g.Registros += row.Registros || 0;
@@ -2021,9 +2013,6 @@ function renderDashboard() {
       totalInv    += row.Inversion || 0;
       const cpl = row.Registros > 0 ? row.Inversion / row.Registros : 0;
       const cpa = row.Depositos > 0 ? row.Inversion / row.Depositos : 0;
-      const tagCls = row.Pais === 'SV' ? 'tag-sv' : 'tag-gt';
-      const flag    = row.Pais === 'SV' ? '🇸🇻' : '🇬🇹';
-      const label   = row.Pais === 'SV' ? 'El Salvador' : 'Guatemala';
 
       // Colores condicionales CPL (umbrales orientativos para marketing digital)
       const cplClass = cpl <= 0 ? '' : cpl < 5  ? 'cpl-good' : cpl < 12 ? 'cpl-warn' : 'cpl-bad';
@@ -2032,9 +2021,6 @@ function renderDashboard() {
       tbody.innerHTML += `
         <tr>
           <td style="font-size:12px; font-weight:700; white-space:nowrap;">${row.Fecha.split('-').reverse().join('/')}</td>
-          <td><span class="country-tag ${tagCls}">${flag} ${label}</span></td>
-          <td class="col-link" style="font-size:12px; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">—</td>
-          <td class="col-clicks col-hide-mobile" style="text-align:right;">${fmtN(row.Clicks)}</td>
           <td style="font-weight:600; text-align:right;">${fmtN(row.Registros)}</td>
           <td style="font-weight:700; color:var(--primary-dark); text-align:right;">${fmtN(row.Depositos)}</td>
           <td class="inv-cell">${row.Inversion > 0 ? fmtM(row.Inversion) : '<span style="color:var(--text-muted);font-size:11px;">Sin dato</span>'}</td>
@@ -2046,13 +2032,13 @@ function renderDashboard() {
 
   if (filtered.length === 0) {
     tbody.innerHTML = `
-      <tr><td colspan="9">
+      <tr><td colspan="6">
         <div class="empty-state" style="padding:36px 24px;">
           <div class="empty-state-icon" style="width:56px;height:56px;">
             <i class="bi bi-funnel" style="font-size:26px;"></i>
           </div>
           <h3 style="font-size:15px;">Sin resultados</h3>
-          <p>No hay datos con los filtros seleccionados.<br>Prueba cambiando el rango de fechas o el país.</p>
+          <p>No hay datos con los filtros seleccionados.<br>Prueba cambiando el rango de fechas.</p>
         </div>
       </td></tr>`;
   }
