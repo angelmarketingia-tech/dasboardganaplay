@@ -1350,17 +1350,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       };
       reader.onload = async function(ev) {
-        if (progressFill) { progressFill.style.width = '80%'; progressLbl.textContent = 'Procesando filas…'; }
+        if (progressFill) { progressFill.style.width = '80%'; progressLbl.textContent = 'Procesando archivo…'; }
         try {
           let matrix = [];
-          if (file.name.toLowerCase().endsWith('.pdf')) {
-            // Procesar PDF
-            if (progressFill) { progressFill.style.width = '85%'; progressLbl.textContent = 'Extrayendo tablas del PDF…'; }
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-            const pdf = await pdfjsLib.getDocument(new Uint8Array(ev.target.result)).promise;
-            matrix = await extractTableFromPDF(pdf);
-            console.log('✅ PDF procesado. Filas extraídas:', matrix.length);
-          } else if (file.name.toLowerCase().endsWith('.csv')) {
+          const fileName = file.name.toLowerCase();
+
+          if (fileName.endsWith('.pdf')) {
+            if (progressFill) { progressFill.style.width = '85%'; progressLbl.textContent = 'Extrayendo datos del PDF…'; }
+            try {
+              pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+              const pdf = await pdfjsLib.getDocument(new Uint8Array(ev.target.result)).promise;
+              matrix = await extractTableFromPDF(pdf);
+            } catch(pdfErr) {
+              console.error('Error procesando PDF:', pdfErr);
+              matrix = [];
+            }
+          } else if (fileName.endsWith('.csv')) {
             const text = new TextDecoder('utf-8').decode(new Uint8Array(ev.target.result));
             const lines = text.split(/\r?\n/).filter(l => l.trim());
             const firstLine = lines[0] || '';
@@ -1379,37 +1384,40 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           } else {
             const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array', cellDates: true });
-            // METICULOSIDAD: Leer TODAS las hojas, no solo la primera
             wb.SheetNames.forEach((sheetName, index) => {
               const ws = wb.Sheets[sheetName];
               const sheetMatrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
               if (index === 0) {
                 matrix = sheetMatrix;
               } else {
-                // Si la hoja tiene datos, los anexamos (asumiendo que las cabeceras se detectarán por hoja)
                 if (sheetMatrix.length > 1) {
-                  // Agregamos un marcador de nueva hoja para que parseMatrix sepa que debe buscar cabeceras de nuevo si es necesario
-                  // Pero para simplificar, anexaremos todo y parseMatrix manejará la detección por fila
                   matrix = matrix.concat(sheetMatrix);
                 }
               }
             });
           }
-          console.log('✅ Archivo leído. Filas totales:', matrix.length);
+
+          if (matrix.length < 2) {
+            throw new Error('No se encontraron datos válidos en el archivo');
+          }
+
+          console.log('✅ Archivo procesado. Filas totales:', matrix.length);
           if (progressFill) { progressFill.style.width = '95%'; progressLbl.textContent = 'Construyendo dashboard…'; }
+
           parseMatrix(matrix);
+
           if (progressFill) {
             progressFill.style.width = '100%';
             progressLbl.textContent = '✅ Datos cargados correctamente';
             setTimeout(() => { progressBar.style.display = 'none'; spinner.style.display = 'none'; }, 2000);
           }
         } catch(err) {
-          console.error('❌ Error leyendo Excel:', err);
+          console.error('❌ Error procesando archivo:', err);
           if (progressBar) { progressBar.style.display = 'none'; spinner.style.display = 'none'; }
-          alert('❌ No se pudo leer el archivo Excel.\n\nAsegúrate de que sea un archivo .xlsx válido.');
-          document.getElementById('topbar-sub').textContent = 'Error leyendo el archivo.';
+          alert('❌ Error procesando el archivo.\n\nIntenta con otro archivo Excel, CSV o PDF.\n\nError: ' + err.message);
+          document.getElementById('topbar-sub').textContent = 'Error procesando archivo.';
         }
-        e.target.value = ''; // Permitir re-subir el mismo archivo
+        e.target.value = '';
       };
       reader.onerror = function() {
         const progressBar = document.getElementById('upload-progress-bar');
@@ -1582,63 +1590,63 @@ async function extractTableFromPDF(pdf) {
   const matrix = [];
 
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-    const page = await pdf.getPage(pageNum);
-    const textContent = await page.getTextContent();
+    try {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const items = textContent.items;
 
-    const items = textContent.items;
-    if (!items || items.length === 0) continue;
+      if (!items || items.length === 0) continue;
 
-    // Agrupar items por filas (usando la posición Y)
-    const rowMap = new Map();
-    let minY = Infinity, maxY = -Infinity;
+      const rowMap = new Map();
 
-    items.forEach(item => {
-      if (!item.str || item.str.trim().length === 0) return;
+      items.forEach(item => {
+        if (!item.str || item.str.trim().length === 0) return;
 
-      const y = Math.round(item.y);
-      const x = Math.round(item.x);
+        const y = Math.round(item.y / 2) * 2;
+        const x = Math.round(item.x);
 
-      if (!rowMap.has(y)) {
-        rowMap.set(y, []);
-      }
-      rowMap.get(y).push({ x, str: item.str.trim() });
-      minY = Math.min(minY, y);
-      maxY = Math.max(maxY, y);
-    });
-
-    // Convertir a matriz ordenada
-    const sortedYs = Array.from(rowMap.keys()).sort((a, b) => b - a);
-
-    sortedYs.forEach(y => {
-      const row = rowMap.get(y);
-      if (!row || row.length === 0) return;
-
-      // Ordenar por X y agrupar columnas
-      row.sort((a, b) => a.x - b.x);
-
-      // Combinar textos en la misma columna
-      const cells = [];
-      let currentX = -Infinity;
-      let currentCell = '';
-
-      row.forEach(item => {
-        // Si hay salto de X, es una nueva columna
-        if (item.x - currentX > 20 && currentCell.trim().length > 0) {
-          cells.push(currentCell.trim());
-          currentCell = '';
+        if (!rowMap.has(y)) {
+          rowMap.set(y, []);
         }
-        currentCell += (currentCell && !currentCell.endsWith(' ') ? ' ' : '') + item.str;
-        currentX = item.x;
+        rowMap.get(y).push({ x, str: item.str.trim() });
       });
 
-      if (currentCell.trim().length > 0) {
-        cells.push(currentCell.trim());
-      }
+      const sortedYs = Array.from(rowMap.keys()).sort((a, b) => b - a);
 
-      if (cells.length > 0) {
-        matrix.push(cells);
-      }
-    });
+      sortedYs.forEach(y => {
+        const row = rowMap.get(y);
+        if (!row || row.length === 0) return;
+
+        row.sort((a, b) => a.x - b.x);
+
+        const cells = [];
+        let lastX = -Infinity;
+        let cellText = '';
+
+        row.forEach((item, idx) => {
+          const gap = item.x - lastX;
+
+          if (gap > 15 && cellText.trim().length > 0) {
+            cells.push(cellText.trim());
+            cellText = '';
+          }
+
+          cellText += (cellText && cellText.at(-1) !== ' ' ? ' ' : '') + item.str;
+          lastX = item.x + item.str.length * 5;
+        });
+
+        if (cellText.trim().length > 0) {
+          cells.push(cellText.trim());
+        }
+
+        if (cells.length > 0 && cells.some(c => c.length > 0)) {
+          matrix.push(cells);
+        }
+      });
+    } catch(pageErr) {
+      console.warn('Error en página ' + pageNum + ':', pageErr.message);
+      continue;
+    }
   }
 
   return matrix;
