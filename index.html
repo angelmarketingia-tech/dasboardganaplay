@@ -1610,7 +1610,7 @@ function parseMatrix(fullMatrix) {
     }
 
     let fPer = -1, fReg = -1;
-    const DATE_KW_LONG  = ['FECHA','PERIODO','TIMESTAMP','FRANJA'];
+    const DATE_KW_LONG  = ['FECHA','PERIODO','TIMESTAMP','FRANJA','DETALLE'];
     const DATE_KW_SHORT = ['DIA','DAY','DATE'];
     const REG_KW_LONG   = ['CANTIDAD USUARIO REGISTRO','CANTIDAD USUARIO','REGISTROS','REGISTRO','REGISTRADOS','COMPLETED REGISTRATION','REGISTRATIONS','RESULTS','RESULTADOS','RESULTADO'];
     const REG_KW_SHORT  = ['REGS'];
@@ -1620,6 +1620,14 @@ function parseMatrix(fullMatrix) {
       if (!v || v.length < 2) continue;
       if (DATE_KW_LONG.some(k => v.includes(k)) || kwMatch(v, DATE_KW_SHORT)) fPer = c;
       if (REG_KW_LONG.some(k => v.includes(k)) || kwMatch(v, REG_KW_SHORT)) fReg = c;
+    }
+
+    // Si no detectó fecha en columna 0 pero la columna 0 parece ser fecha, usarla
+    if (fPer === -1) {
+      const firstColVal = String(row[0] || '').trim();
+      if (firstColVal && (firstColVal instanceof Date || /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/.test(firstColVal))) {
+        fPer = 0;
+      }
     }
 
     if (fPer !== -1 && fReg !== -1) {
