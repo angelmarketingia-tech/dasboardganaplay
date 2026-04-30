@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <!-- Firebase SDK -->
@@ -656,7 +657,7 @@
           <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
           <div class="progress-label" id="progress-label">Leyendo archivo...</div>
         </div>
-        <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none">
+        <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.pdf" style="display:none">
       </label>
     </div>
 
@@ -1348,11 +1349,18 @@ document.addEventListener('DOMContentLoaded', () => {
           progressLbl.textContent = 'Cargando… ' + pct + '%';
         }
       };
-      reader.onload = function(ev) {
+      reader.onload = async function(ev) {
         if (progressFill) { progressFill.style.width = '80%'; progressLbl.textContent = 'Procesando filas…'; }
         try {
           let matrix = [];
-          if (file.name.toLowerCase().endsWith('.csv')) {
+          if (file.name.toLowerCase().endsWith('.pdf')) {
+            // Procesar PDF
+            if (progressFill) { progressFill.style.width = '85%'; progressLbl.textContent = 'Extrayendo tablas del PDF…'; }
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+            const pdf = await pdfjsLib.getDocument(new Uint8Array(ev.target.result)).promise;
+            matrix = await extractTableFromPDF(pdf);
+            console.log('✅ PDF procesado. Filas extraídas:', matrix.length);
+          } else if (file.name.toLowerCase().endsWith('.csv')) {
             const text = new TextDecoder('utf-8').decode(new Uint8Array(ev.target.result));
             const lines = text.split(/\r?\n/).filter(l => l.trim());
             const firstLine = lines[0] || '';
@@ -1568,6 +1576,72 @@ function normalizeDate(raw) {
   }
 
   return `${yr}-${String(mo).padStart(2,'0')}-${String(da).padStart(2,'0')}`;
+}
+
+async function extractTableFromPDF(pdf) {
+  const matrix = [];
+
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const textContent = await page.getTextContent();
+
+    const items = textContent.items;
+    if (!items || items.length === 0) continue;
+
+    // Agrupar items por filas (usando la posición Y)
+    const rowMap = new Map();
+    let minY = Infinity, maxY = -Infinity;
+
+    items.forEach(item => {
+      if (!item.str || item.str.trim().length === 0) return;
+
+      const y = Math.round(item.y);
+      const x = Math.round(item.x);
+
+      if (!rowMap.has(y)) {
+        rowMap.set(y, []);
+      }
+      rowMap.get(y).push({ x, str: item.str.trim() });
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+    });
+
+    // Convertir a matriz ordenada
+    const sortedYs = Array.from(rowMap.keys()).sort((a, b) => b - a);
+
+    sortedYs.forEach(y => {
+      const row = rowMap.get(y);
+      if (!row || row.length === 0) return;
+
+      // Ordenar por X y agrupar columnas
+      row.sort((a, b) => a.x - b.x);
+
+      // Combinar textos en la misma columna
+      const cells = [];
+      let currentX = -Infinity;
+      let currentCell = '';
+
+      row.forEach(item => {
+        // Si hay salto de X, es una nueva columna
+        if (item.x - currentX > 20 && currentCell.trim().length > 0) {
+          cells.push(currentCell.trim());
+          currentCell = '';
+        }
+        currentCell += (currentCell && !currentCell.endsWith(' ') ? ' ' : '') + item.str;
+        currentX = item.x;
+      });
+
+      if (currentCell.trim().length > 0) {
+        cells.push(currentCell.trim());
+      }
+
+      if (cells.length > 0) {
+        matrix.push(cells);
+      }
+    });
+  }
+
+  return matrix;
 }
 
 function parseMatrix(fullMatrix) {
