@@ -1048,31 +1048,26 @@ async function saveToLocal() {
 
 function updateUploadAreaUI() {
   const ua = $('upload-area');
-  if (!ua) return;
-
-  const emptyState = ua.querySelector('.empty-state');
-  if (!emptyState) return;
-
-  if (globalData.length > 0) {
-    // Hay datos cargados
-    const h3 = emptyState.querySelector('h3');
-    const p = emptyState.querySelector('p:not(.empty-step-parent)');
-    const stepDiv = emptyState.querySelector('.empty-state-steps');
-
-    if (h3) h3.textContent = `✅ ${globalData.length} filas cargadas`;
-    if (p) p.textContent = 'Puedes subir un nuevo archivo Excel o editar los datos manualmente.';
-    if (stepDiv) stepDiv.style.display = 'none';
-  }
-
-  // Aplicar bloqueo visual para supervisor
-  const role = sessionStorage.getItem('gp_role');
   const uploadLabel = document.getElementById('upload-label');
-  if (role === 'supervisor' && uploadLabel) {
+  if (!ua || !uploadLabel) return;
+
+  const role = sessionStorage.getItem('gp_role');
+
+  // NUNCA modificar la interfaz visual - mantener SIEMPRE igual
+  // Solo aplicar bloqueo visual para supervisor
+  if (role === 'supervisor') {
     uploadLabel.style.pointerEvents = 'none';
     uploadLabel.style.opacity = '0.5';
     uploadLabel.style.cursor = 'not-allowed';
     ua.style.borderColor = 'rgba(245, 158, 11, 0.3)';
     ua.style.backgroundColor = 'rgba(245, 158, 11, 0.05)';
+  } else {
+    // Admin: interfaz normal
+    uploadLabel.style.pointerEvents = 'auto';
+    uploadLabel.style.opacity = '1';
+    uploadLabel.style.cursor = 'pointer';
+    ua.style.borderColor = '';
+    ua.style.backgroundColor = '';
   }
 }
 
