@@ -2828,10 +2828,13 @@ function saveManualData() {
 
   let addedCount = 0;
   inputs.forEach(input => {
-    const dateInput = input.parentElement.parentElement.querySelector('input[disabled]');
-    const fecha = dateInput.value;
+    const id = input.id; // e.g., "reg-2026-05-04" or "ftd-2026-05-04"
+    if (!id) return;
+
+    const [type, ...dateParts] = id.split('-');
+    const fecha = dateParts.join('-'); // e.g., "2026-05-04"
     const value = parseInt(input.value) || 0;
-    const isReg = input.id.startsWith('reg-');
+    const isReg = type === 'reg';
     const key = `${manualCountrySelected}::${fecha}`;
 
     if (!manualDataInputs[key]) manualDataInputs[key] = { registros: 0, ftds: 0 };
