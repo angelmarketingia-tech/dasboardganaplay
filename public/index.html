@@ -2753,9 +2753,11 @@ function setManualCountry(country) {
 }
 
 function changeManualMonth(offset) {
+  console.log('📅 changeManualMonth llamado con offset:', offset);
   if (!manualSelectedMonth) {
     const today = new Date();
     manualSelectedMonth = { year: today.getFullYear(), month: today.getMonth() };
+    console.log('📅 Mes inicial:', manualSelectedMonth);
   }
   manualSelectedMonth.month += offset;
   if (manualSelectedMonth.month > 11) {
@@ -2765,6 +2767,7 @@ function changeManualMonth(offset) {
     manualSelectedMonth.month = 11;
     manualSelectedMonth.year -= 1;
   }
+  console.log('📅 Nuevo mes:', manualSelectedMonth);
   renderManualDataForm();
 }
 
@@ -2936,6 +2939,27 @@ function saveManualData() {
   saveToLocal();
   console.log('📊 Actualizando interfaz...');
   updateUploadAreaUI();
+
+  // Resetear filtros para mostrar todos los datos
+  console.log('🔧 Reseteando filtros...');
+  const filterStart = $('filter-start');
+  const filterEnd = $('filter-end');
+  const filterLink = $('filter-link');
+  if (filterStart) filterStart.value = '';
+  if (filterEnd) filterEnd.value = '';
+  if (filterLink) filterLink.value = '';
+  activeCountry = 'ALL';
+  const countryBtns = document.querySelectorAll('[data-country]');
+  countryBtns.forEach(btn => {
+    if (btn.dataset.country === 'ALL') {
+      btn.style.background = 'var(--primary)';
+      btn.style.color = '#000';
+    } else {
+      btn.style.background = 'var(--bg)';
+      btn.style.color = 'var(--text-main)';
+    }
+  });
+
   console.log('🔄 Renderizando dashboard con', globalData.length, 'registros');
   renderDashboard();
   console.log('✅ Dashboard renderizado');
