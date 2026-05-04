@@ -261,27 +261,197 @@
     .btn-dark-fill { background: var(--border); border-color: var(--border); color: var(--text-main); }
     .btn-dark-fill:hover { background: #303846; }
 
-    /* ── UPLOAD ── */
+    /* ── UPLOAD SECTION (PROFESSIONAL - COLLAPSIBLE) ── */
     #upload-area {
-      background: var(--card-bg); border: 2px dashed var(--primary);
-      border-radius: var(--border-radius); padding: 0; text-align: center;
-      margin-bottom: 24px; transition: .25s; cursor: pointer;
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 0;
+      margin-bottom: 24px;
       overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: all .3s ease;
     }
-    #upload-area:hover { background: rgba(0,212,170,0.03); border-color: var(--primary-dark); }
-    #upload-area:hover .empty-state-icon { transform: scale(1.06); transition: transform .2s; }
-    #upload-area .upload-icon { font-size: 48px; color: var(--primary); margin-bottom: 12px; display: block; }
-    #upload-area h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
-    #upload-area p { color: var(--text-muted); font-size: 13px; line-height: 1.5; }
+    #upload-area.collapsed {
+      margin-bottom: 12px;
+    }
+    #upload-area.collapsed .upload-main,
+    #upload-area.collapsed #upload-progress-bar,
+    #upload-area.collapsed .upload-formats {
+      display: none !important;
+    }
+
+    .upload-container { display: flex; flex-direction: column; }
+    .upload-header {
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(0,212,170,0.08) 0%, rgba(0,212,170,0.03) 100%);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .upload-header-icon {
+      font-size: 28px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+    }
+    .upload-header-content h3 {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin: 0 0 2px 0;
+    }
+    .upload-header-content p {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .upload-main { padding: 20px 24px; }
+
+    .upload-drop-zone {
+      border: 2px dashed var(--primary);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(0,212,170,0.02);
+      transition: all .2s;
+      margin-bottom: 16px;
+    }
+    #upload-area:hover .upload-drop-zone {
+      background: rgba(0,212,170,0.06);
+      border-color: var(--primary-dark);
+    }
+    #upload-area.drag-over .upload-drop-zone {
+      background: rgba(0,212,170,0.08);
+      border-color: var(--primary-dark);
+      transform: scale(1.01);
+    }
+
+    .upload-drop-icon {
+      font-size: 36px;
+      color: var(--primary);
+      margin-bottom: 8px;
+      display: block;
+      transition: transform .2s;
+    }
+    #upload-area:hover .upload-drop-icon,
+    #upload-area.drag-over .upload-drop-icon {
+      transform: scale(1.1);
+    }
+    .upload-drop-text h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 0 0 4px 0;
+    }
+    .upload-drop-text p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 0 0 10px 0;
+    }
+
     .btn-upload {
-      background: var(--primary); color: #000; padding: 12px 28px;
-      border-radius: 8px; font-weight: 800; cursor: pointer;
-      display: inline-flex; align-items: center; gap: 8px;
-      margin-top: 4px; font-size: 14px;
-      box-shadow: 0 4px 14px rgba(0,255,102,0.2);
-      transition: .2s;
+      background: var(--primary);
+      color: #000;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      border: none;
+      box-shadow: 0 3px 10px rgba(0,255,102,0.2);
+      transition: all .2s;
     }
-    .btn-upload:hover { background: var(--primary-dark); box-shadow: 0 6px 18px rgba(0,212,170,0.4); transform: translateY(-1px); }
+    .btn-upload:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 5px 14px rgba(0,255,102,0.3);
+      transform: translateY(-1px);
+    }
+    .btn-upload:active { transform: translateY(0); }
+
+    .upload-formats {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .format-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .format-badge i {
+      font-size: 12px;
+      color: var(--primary);
+    }
+    .format-size {
+      font-size: 10px;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 1px;
+    }
+
+    #upload-progress-bar {
+      display: none;
+      padding: 20px 24px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+    }
+    #upload-progress-bar.active { display: block; }
+
+    .upload-spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(0,255,102,0.2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 14px auto;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+      border-radius: 3px;
+      width: 0%;
+      transition: width .3s ease;
+    }
+    .progress-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      text-align: center;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
     /* ── KPI GRID ── */
     .section-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
@@ -635,30 +805,72 @@
       </div>
     </div>
 
-    <!-- UPLOAD -->
-    <div id="upload-area" class="restrict-supervisor">
-      <label style="cursor:pointer; display:block;">
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <i class="bi bi-file-earmark-spreadsheet-fill"></i>
-          </div>
-          <h3>¡Bienvenido a GanaPlay Smart Dashboard!</h3>
-          <p>Sube tu reporte de Meta Ads (.xlsx) para visualizar registros, FTDs e inversión por país en segundos.</p>
-          <div class="empty-state-steps">
-            <div class="empty-step"><i class="bi bi-1-circle-fill"></i> Exporta tu Excel de Meta Ads</div>
-            <div class="empty-step"><i class="bi bi-2-circle-fill"></i> Selecciona el archivo aquí</div>
-            <div class="empty-step"><i class="bi bi-3-circle-fill"></i> Visualiza tus KPIs al instante</div>
-          </div>
-          <span class="btn-upload" style="margin-top:8px;"><i class="bi bi-cloud-upload"></i> Seleccionar Archivo Excel</span>
+    <!-- UPLOAD SECTION (PROFESSIONAL - COLLAPSIBLE) -->
+    <div id="upload-area" class="restrict-supervisor upload-container">
+      <!-- HEADER with COLLAPSE BUTTON -->
+      <div class="upload-header" onclick="toggleUploadSection()" style="cursor:pointer; user-select:none;">
+        <div class="upload-header-icon">
+          <i class="bi bi-cloud-arrow-up-fill"></i>
         </div>
-        <!-- Barra de progreso (visible al procesar) -->
-        <div id="upload-progress-bar">
-          <div class="upload-spinner" id="upload-spinner"></div>
-          <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
-          <div class="progress-label" id="progress-label">Leyendo archivo...</div>
+        <div class="upload-header-content" style="flex:1;">
+          <h3>Carga de Datos</h3>
+          <p>Sube tu archivo Excel, PDF o CSV para importar registros y depósitos automáticamente</p>
         </div>
-        <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.pdf" style="display:none">
-      </label>
+        <div id="upload-toggle-icon" style="font-size:20px; color:var(--text-muted); transition:transform .2s; transform:rotate(0deg);">
+          <i class="bi bi-chevron-down"></i>
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT -->
+      <div class="upload-main">
+        <label style="cursor:pointer; display:block;">
+          <!-- DROP ZONE -->
+          <div class="upload-drop-zone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" onclick="document.getElementById('file-input').click()">
+            <i class="bi bi-file-earmark-arrow-up upload-drop-icon"></i>
+            <div class="upload-drop-text">
+              <h4>Arrastra tu archivo aquí</h4>
+              <p>o haz clic para seleccionar</p>
+            </div>
+            <button type="button" class="btn-upload">
+              <i class="bi bi-cloud-upload"></i> Seleccionar Archivo
+            </button>
+          </div>
+
+          <!-- PROGRESS BAR -->
+          <div id="upload-progress-bar">
+            <div class="upload-spinner" id="upload-spinner"></div>
+            <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="progress-label" id="progress-label">Procesando archivo...</div>
+          </div>
+
+          <!-- SUPPORTED FORMATS -->
+          <div class="upload-formats">
+            <div class="format-badge">
+              <i class="bi bi-file-earmark-spreadsheet"></i>
+              <div>
+                <strong>Excel</strong>
+                <span class="format-size">(.xlsx, .xls)</span>
+              </div>
+            </div>
+            <div class="format-badge">
+              <i class="bi bi-file-earmark-pdf"></i>
+              <div>
+                <strong>PDF</strong>
+                <span class="format-size">(.pdf)</span>
+              </div>
+            </div>
+            <div class="format-badge">
+              <i class="bi bi-file-earmark-text"></i>
+              <div>
+                <strong>CSV</strong>
+                <span class="format-size">(.csv)</span>
+              </div>
+            </div>
+          </div>
+
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.pdf" style="display:none" onchange="handleFileInput(event)">
+        </label>
+      </div>
     </div>
 
     <!-- COOPERATIVE STRATEGY CHAT -->
@@ -860,42 +1072,118 @@
 <!-- ══════════════════════════════════════════ -->
 <!-- MODAL OCR INVERSIÓN IA                    -->
 <!-- ══════════════════════════════════════════ -->
-<!-- MODAL DATOS MANUALES -->
+<!-- MODAL DATOS MANUALES (IMPROVED) -->
 <div class="modal-overlay" id="modal-manual" style="display:none;">
-  <div class="modal-card" style="max-width:500px;">
+  <div class="modal-card" style="max-width:600px;">
     <div class="modal-header">
-      <div class="modal-title"><i class="bi bi-pencil-square"></i> Agregar Datos Manuales</div>
+      <div class="modal-title"><i class="bi bi-pencil-square"></i> Ingreso Manual de Datos</div>
       <div class="modal-close" onclick="closeManualDataModal()"><i class="bi bi-x"></i></div>
     </div>
     <p class="modal-sub">
-      Ingresa los datos del día manualmente.
+      Ingresa registros y depósitos del día específico. Los datos se validarán automáticamente.
     </p>
 
-    <div style="display:flex; flex-direction:column; gap:16px;">
-      <div>
-        <label class="filter-label">Fecha</label>
-        <input type="date" id="manual-date" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--card-bg); color:var(--text-main); font-size:14px;">
+    <!-- COUNTRY SELECTOR -->
+    <div style="margin-bottom:20px;">
+      <label class="filter-label">País</label>
+      <div style="display:flex; gap:12px;">
+        <button class="country-selector active" id="manual-country-sv" onclick="setManualCountry('SV')" style="flex:1;">
+          <i class="bi bi-flag-fill" style="color:var(--sv-color);"></i> El Salvador
+        </button>
+        <button class="country-selector" id="manual-country-gt" onclick="setManualCountry('GT')" style="flex:1;">
+          <i class="bi bi-flag-fill" style="color:var(--gt-color);"></i> Guatemala
+        </button>
       </div>
-
-      <div>
-        <label class="filter-label">Cantidad de Registros</label>
-        <input type="number" id="manual-registros" min="0" placeholder="Ej: 45" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--card-bg); color:var(--text-main); font-size:14px;">
-      </div>
-
-      <div>
-        <label class="filter-label">Cantidad de Primeros Depósitos</label>
-        <input type="number" id="manual-depositos" min="0" placeholder="Ej: 12" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--card-bg); color:var(--text-main); font-size:14px;">
-      </div>
-
-      <button onclick="addManualData()" style="margin-top:12px; width:100%; padding:12px; background:var(--primary); color:#000; border:none; border-radius:8px; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(0,255,102,0.2);">
-        <i class="bi bi-plus-circle-fill"></i> Agregar Registro
-      </button>
     </div>
 
-    <div id="manual-list-container" style="margin-top:20px; max-height:300px; overflow-y:auto;">
+    <!-- FORM FIELDS -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+      <!-- DATE -->
+      <div style="grid-column:1/-1;">
+        <label class="filter-label" for="manual-date">Fecha <span style="color:var(--danger);">*</span></label>
+        <input type="date" id="manual-date" style="width:100%; padding:11px 13px; border-radius:8px; border:1.5px solid var(--border); background:var(--card-bg); color:var(--text-main); font-size:14px; font-family:Inter; transition:.2s;" onchange="validateManualDate()">
+        <div id="manual-date-error" style="font-size:11px; color:var(--danger); margin-top:4px; display:none;"></div>
+      </div>
+
+      <!-- REGISTROS -->
+      <div>
+        <label class="filter-label" for="manual-registros">Registros (Usuarios) <span style="color:var(--danger);">*</span></label>
+        <div style="position:relative;">
+          <input type="number" id="manual-registros" min="0" max="9999" placeholder="0" style="width:100%; padding:11px 13px; border-radius:8px; border:1.5px solid var(--border); background:var(--card-bg); color:var(--text-main); font-size:14px; font-family:Inter; transition:.2s;" onchange="validateManualRegistros()" oninput="validateManualRegistros()">
+          <div id="manual-registros-error" style="font-size:11px; color:var(--danger); margin-top:4px; display:none;"></div>
+        </div>
+      </div>
+
+      <!-- DEPOSITOS -->
+      <div>
+        <label class="filter-label" for="manual-depositos">Primeros Depósitos (FTD) <span style="color:var(--danger);">*</span></label>
+        <div style="position:relative;">
+          <input type="number" id="manual-depositos" min="0" max="9999" placeholder="0" style="width:100%; padding:11px 13px; border-radius:8px; border:1.5px solid var(--border); background:var(--card-bg); color:var(--text-main); font-size:14px; font-family:Inter; transition:.2s;" onchange="validateManualDepositos()" oninput="validateManualDepositos()">
+          <div id="manual-depositos-error" style="font-size:11px; color:var(--danger); margin-top:4px; display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD BUTTON -->
+    <button id="btn-add-manual" onclick="addManualData()" style="width:100%; padding:13px; background:var(--primary); color:#000; border:none; border-radius:8px; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(0,255,102,0.25); transition:.2s; display:flex; align-items:center; justify-content:center; gap:8px;">
+      <i class="bi bi-plus-circle-fill"></i> Agregar Registro
+    </button>
+
+    <!-- ENTRIES LIST -->
+    <div style="margin-top:24px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+        <h4 style="margin:0; font-size:13px; font-weight:700; color:var(--text-muted); text-transform:uppercase; flex:1;">Registros Agregados</h4>
+        <span id="manual-entries-count" style="background:rgba(0,255,102,0.1); color:var(--primary); padding:2px 8px; border-radius:6px; font-size:12px; font-weight:700;">0</span>
+      </div>
+      <div id="manual-list-container" style="max-height:400px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+        <div style="padding:20px; text-align:center; color:var(--text-muted); font-size:13px;">
+          <i class="bi bi-inbox" style="font-size:24px; opacity:0.5; display:block; margin-bottom:8px;"></i>
+          Sin registros aún
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div style="display:flex; gap:12px; margin-top:20px; padding-top:20px; border-top:1px solid var(--border);">
+      <button onclick="closeManualDataModal()" style="flex:1; padding:11px; background:var(--bg); border:1.5px solid var(--border); border-radius:8px; color:var(--text-main); font-weight:700; cursor:pointer; transition:.2s;">
+        Cancelar
+      </button>
+      <button id="btn-save-manual-data" onclick="saveManualDataBatch()" style="flex:1; padding:11px; background:var(--primary); color:#000; border:none; border-radius:8px; font-weight:800; cursor:pointer; box-shadow:0 4px 12px rgba(0,255,102,0.25); transition:.2s;" disabled>
+        <i class="bi bi-check-circle-fill"></i> Guardar Todo
+      </button>
     </div>
   </div>
 </div>
+
+<!-- CSS PARA COUNTRY SELECTOR -->
+<style>
+  .country-selector {
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text-main);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: Inter;
+  }
+  .country-selector:hover {
+    border-color: var(--primary);
+    background: var(--card-bg);
+  }
+  .country-selector.active {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+    box-shadow: 0 0 12px rgba(0,255,102,0.3);
+  }
+</style>
 
 <div class="modal-overlay" id="modal-inv">
   <div class="modal-card">
@@ -1732,7 +2020,7 @@ function parseMatrix(fullMatrix) {
     let fPer = -1, fReg = -1;
     const DATE_KW_LONG  = ['FECHA','PERIODO','TIMESTAMP','FRANJA','DETALLE'];
     const DATE_KW_SHORT = ['DIA','DAY','DATE'];
-    const REG_KW_LONG   = ['CANTIDAD USUARIO REGISTRO','CANTIDAD USUARIO','REGISTROS','REGISTRO','REGISTRADOS','COMPLETED REGISTRATION','REGISTRATIONS','RESULTS','RESULTADOS','RESULTADO'];
+    const REG_KW_LONG   = ['CANTIDAD USUARIO REGISTRO','CANTIDAD USUARIO','USUARIOS REGISTRADOS','REGISTROS','REGISTRO','REGISTRADOS','COMPLETED REGISTRATION','REGISTRATIONS','RESULTS','RESULTADOS','RESULTADO'];
     const REG_KW_SHORT  = ['REGS'];
 
     for (let c = 0; c < row.length; c++) {
@@ -1758,7 +2046,7 @@ function parseMatrix(fullMatrix) {
       let candidateFtdGeneric  = -1;
       let localColPais = -1, localColLink = -1, localColClicks = -1;
 
-      const FTD_SYNONYMS = ['CANTIDAD PRIMER DEPOSITO','CANTIDAD PRIMEROS DEPOSITO','FTD','FTDS','DEPOSITO','DEPÓSITO','DEPOSITOS','DEPÓSITOS',
+      const FTD_SYNONYMS = ['CANTIDAD PRIMER DEPOSITO','CANTIDAD PRIMEROS DEPOSITO','CANTIDAD DE PRIMEROS DEPOSITOS','CANTIDAD DE PRIMEROS DEPÓSITOS','CANTIDAD PRIMEROS DEPÓSITOS','FTD','FTDS','DEPOSITO','DEPÓSITO','DEPOSITOS','DEPÓSITOS',
         'DEPOSITS','DEPOSITORS','FIRST TIME','FIRST-TIME','FIRST_TIME',
         'PRIMEROS_DEPOSITOS','PRIMEROS DEPOSITOS','PRIMER_DEPOSITO','PRIMER DEPOSITO',
         'PRIMEROS DEPÓSITOS','PRIMER DEPÓSITO','PRIMEROS'];
@@ -1951,6 +2239,12 @@ function updateFilterUI() {
   const countries = [...new Set(globalData.map(d => d.Pais))]
     .map(p => p === 'SV' ? '🇸🇻 El Salvador' : '🇬🇹 Guatemala').join(' + ');
   $('topbar-sub').textContent = `${globalData.length} registros cargados · ${countries}`;
+
+  // Colapsar sección de carga después de cargar datos exitosamente
+  const uploadArea = document.getElementById('upload-area');
+  if (uploadArea && !uploadArea.classList.contains('collapsed')) {
+    setTimeout(() => toggleUploadSection(), 400);
+  }
 
   // Auto-filtrar al mes actual completo al cargar datos
   if (globalData.length > 0) {
@@ -2224,105 +2518,224 @@ function renderDashboard() {
 // MODAL DATOS MANUALES
 // ═══════════════════════════════════════════════════════
 let manualDataList = [];
+let manualCountrySelected = 'SV';
 
 function openManualDataModal() {
   $('modal-manual').style.display = 'flex';
+  manualCountrySelected = 'SV';
+  setManualCountry('SV');
   const today = new Date();
   const yyyy = today.getFullYear();
   const mm = String(today.getMonth() + 1).padStart(2, '0');
   const dd = String(today.getDate()).padStart(2, '0');
   $('manual-date').value = `${yyyy}-${mm}-${dd}`;
+  clearManualForm();
   renderManualDataList();
 }
 
 function closeManualDataModal() {
   $('modal-manual').style.display = 'none';
+  manualDataList = [];
+}
+
+function setManualCountry(country) {
+  manualCountrySelected = country;
+  $('manual-country-sv').classList.toggle('active', country === 'SV');
+  $('manual-country-gt').classList.toggle('active', country === 'GT');
+}
+
+function clearManualForm() {
+  $('manual-registros').value = '';
+  $('manual-depositos').value = '';
+  clearManualErrors();
+}
+
+function clearManualErrors() {
+  ['date', 'registros', 'depositos'].forEach(field => {
+    const errorEl = $(`manual-${field}-error`);
+    if (errorEl) errorEl.style.display = 'none';
+  });
+}
+
+function validateManualDate() {
+  const fecha = $('manual-date').value;
+  const errorEl = $('manual-date-error');
+
+  if (!fecha) {
+    errorEl.textContent = 'Selecciona una fecha válida';
+    errorEl.style.display = 'block';
+    return false;
+  }
+
+  errorEl.style.display = 'none';
+  return true;
+}
+
+function validateManualRegistros() {
+  const input = $('manual-registros');
+  const value = parseInt(input.value) || 0;
+  const errorEl = $('manual-registros-error');
+
+  if (value < 0 || value > 9999) {
+    errorEl.textContent = 'Rango: 0 a 9999';
+    errorEl.style.display = 'block';
+    return false;
+  }
+
+  errorEl.style.display = 'none';
+  return true;
+}
+
+function validateManualDepositos() {
+  const input = $('manual-depositos');
+  const value = parseInt(input.value) || 0;
+  const registros = parseInt($('manual-registros').value) || 0;
+  const errorEl = $('manual-depositos-error');
+
+  if (value < 0 || value > 9999) {
+    errorEl.textContent = 'Rango: 0 a 9999';
+    errorEl.style.display = 'block';
+    return false;
+  }
+
+  if (value > registros) {
+    errorEl.textContent = 'Los depósitos no pueden ser mayores a los registros';
+    errorEl.style.display = 'block';
+    return false;
+  }
+
+  errorEl.style.display = 'none';
+  return true;
 }
 
 function addManualData() {
-  const fecha = $('manual-date').value;
-  const registros = parseInt($('manual-registros').value) || 0;
-  const depositos = parseInt($('manual-depositos').value) || 0;
+  clearManualErrors();
 
-  if (!fecha) {
-    alert('Por favor selecciona una fecha');
+  if (!validateManualDate() || !validateManualRegistros() || !validateManualDepositos()) {
     return;
   }
 
-  manualDataList.push({ fecha, registros, depositos });
+  const fecha = $('manual-date').value;
+  const registros = parseInt($('manual-registros').value) || 0;
+  const depositos = parseInt($('manual-depositos').value) || 0;
+  const pais = manualCountrySelected;
+
+  if (registros === 0 && depositos === 0) {
+    alert('Ingresa al menos un registro o depósito');
+    return;
+  }
+
+  const existingIndex = manualDataList.findIndex(item => item.fecha === fecha && item.pais === pais);
+
+  if (existingIndex >= 0) {
+    manualDataList[existingIndex].registros += registros;
+    manualDataList[existingIndex].depositos += depositos;
+  } else {
+    manualDataList.push({ fecha, registros, depositos, pais });
+  }
+
   manualDataList.sort((a, b) => a.fecha.localeCompare(b.fecha));
 
-  $('manual-registros').value = '';
-  $('manual-depositos').value = '';
+  clearManualForm();
   renderManualDataList();
+
+  if ($('btn-save-manual-data')) {
+    $('btn-save-manual-data').disabled = manualDataList.length === 0;
+  }
 }
 
 function renderManualDataList() {
   const container = $('manual-list-container');
+  const countEl = $('manual-entries-count');
+
   if (manualDataList.length === 0) {
-    container.innerHTML = '<p style="color:var(--text-muted); font-size:13px;">Sin datos agregados</p>';
+    countEl.textContent = '0';
+    container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-muted); font-size:13px;"><i class="bi bi-inbox" style="font-size:24px; opacity:0.5; display:block; margin-bottom:8px;"></i>Sin registros aún</div>';
     return;
   }
 
-  let html = '<div style="background:var(--bg); border-radius:8px; overflow:hidden;">';
+  countEl.textContent = manualDataList.length;
+
+  let html = '';
   manualDataList.forEach((item, idx) => {
-    const dateLabel = new Date(item.fecha + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    const dateObj = new Date(item.fecha + 'T00:00:00');
+    const dateLabel = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    const countryLabel = item.pais === 'SV' ? '🇸🇻 El Salvador' : '🇬🇹 Guatemala';
+    const countryColor = item.pais === 'SV' ? 'var(--sv-color)' : 'var(--gt-color)';
+
     html += `
-      <div style="padding:12px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <div style="font-weight:600; color:var(--text-main);">${dateLabel}</div>
-          <div style="font-size:12px; color:var(--text-muted);">Reg: ${item.registros} | Dep: ${item.depositos}</div>
+      <div style="padding:14px 16px; background:var(--bg); border:1px solid var(--border); border-radius:8px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div style="flex:1;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <span style="font-weight:700; color:var(--text-main); font-size:14px;">${dateLabel}</span>
+            <span style="padding:2px 8px; border-radius:6px; font-size:11px; font-weight:700; color:${countryColor}; background:rgba(0,0,0,0.1);">${countryLabel}</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted); display:flex; gap:16px;">
+            <span><strong>${item.registros}</strong> registros</span>
+            <span><strong>${item.depositos}</strong> depósitos</span>
+          </div>
         </div>
-        <button onclick="removeManualData(${idx})" style="background:#dc2626; border:none; color:#fff; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px;">
-          <i class="bi bi-trash"></i>
+        <button onclick="removeManualData(${idx})" style="background:var(--border); border:none; color:var(--danger); padding:8px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:700; transition:.2s;" onmouseover="this.style.background='rgba(220,38,38,0.1)';" onmouseout="this.style.background='var(--border)';">
+          <i class="bi bi-trash3-fill"></i> Eliminar
         </button>
       </div>
     `;
   });
-  html += '</div>';
-  html += `<button onclick="saveManualData()" style="margin-top:16px; width:100%; padding:12px; background:var(--primary); color:#000; border:none; border-radius:8px; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(0,255,102,0.2);">
-    <i class="bi bi-check-lg"></i> Guardar y Actualizar Dashboard
-  </button>`;
+
   container.innerHTML = html;
 }
 
 function removeManualData(idx) {
   manualDataList.splice(idx, 1);
   renderManualDataList();
+  if ($('btn-save-manual-data')) {
+    $('btn-save-manual-data').disabled = manualDataList.length === 0;
+  }
 }
 
-function saveManualData() {
+function saveManualDataBatch() {
   if (manualDataList.length === 0) {
-    alert('Agrega al menos un registro');
+    alert('Agrega al menos un registro antes de guardar');
     return;
   }
 
-  manualDataList.forEach(item => {
-    const key = item.fecha;
-    if (!globalData.find(d => d.Fecha === key)) {
-      globalData.push({
-        Fecha: key,
-        Registros: item.registros,
-        Depositos: item.depositos,
-        Inversion: 0,
-        Clicks: 0,
-        Pais: 'SV',
-        Link: 'Manual'
-      });
-    } else {
-      const existing = globalData.find(d => d.Fecha === key);
-      existing.Registros += item.registros;
-      existing.Depositos += item.depositos;
-    }
-  });
+  const btn = $('btn-save-manual-data');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
+  btn.disabled = true;
 
-  globalData.sort((a, b) => a.Fecha.localeCompare(b.Fecha));
-  saveToLocal();
-  updateFilterUI();
-  renderDashboard();
-  manualDataList = [];
-  closeManualDataModal();
-  alert('✅ Datos guardados correctamente');
+  setTimeout(() => {
+    manualDataList.forEach(item => {
+      const key = item.fecha;
+      const existingIndex = globalData.findIndex(d => d.Fecha === key && d.Pais === item.pais);
+
+      if (existingIndex === -1) {
+        globalData.push({
+          Fecha: key,
+          Registros: item.registros,
+          Depositos: item.depositos,
+          Inversion: 0,
+          Clicks: 0,
+          Pais: item.pais,
+          Link: 'Manual'
+        });
+      } else {
+        globalData[existingIndex].Registros = (globalData[existingIndex].Registros || 0) + item.registros;
+        globalData[existingIndex].Depositos = (globalData[existingIndex].Depositos || 0) + item.depositos;
+      }
+    });
+
+    globalData.sort((a, b) => a.Fecha.localeCompare(b.Fecha));
+    saveToLocal();
+    updateFilterUI();
+    renderDashboard();
+    manualDataList = [];
+
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+
+    closeManualDataModal();
+  }, 400);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2994,6 +3407,71 @@ function renderInvStats() {
     '<td style="text-align:right; font-weight:800;">$' + totalInv.toLocaleString('en-US', {minimumFractionDigits:2}) + '</td>' +
     '<td style="text-align:right; font-weight:800; color:var(--primary-dark);">$' + totalInv.toLocaleString('en-US', {minimumFractionDigits:2}) + '</td>' +
     '</tr>';
+}
+
+// ═══════════════════════════════════════════════════════
+// UPLOAD SECTION - COLLAPSIBLE
+// ═══════════════════════════════════════════════════════
+function toggleUploadSection() {
+  const uploadArea = document.getElementById('upload-area');
+  const toggleIcon = document.getElementById('upload-toggle-icon');
+
+  uploadArea.classList.toggle('collapsed');
+
+  if (uploadArea.classList.contains('collapsed')) {
+    toggleIcon.style.transform = 'rotate(-90deg)';
+  } else {
+    toggleIcon.style.transform = 'rotate(0deg)';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// DRAG & DROP HANDLERS - IMPROVED
+// ═══════════════════════════════════════════════════════
+function handleDragOver(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('upload-area').classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('upload-area').classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('upload-area').classList.remove('drag-over');
+
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    const file = files[0];
+    const fileInput = document.getElementById('file-input');
+
+    if (fileInput) {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
+
+      const event = new Event('change', { bubbles: true });
+      fileInput.dispatchEvent(event);
+    }
+  }
+}
+
+function handleFileInput(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const progressBar = document.getElementById('upload-progress-bar');
+  if (progressBar) {
+    progressBar.classList.add('active');
+  }
+
+  const event = new Event('change', { bubbles: true });
+  e.target.dispatchEvent(event);
 }
 </script>
 </body>
