@@ -2837,14 +2837,23 @@ function renderManualDataForm() {
 
 function saveManualData() {
   const container = $('manual-dates-form');
+  if (!container) {
+    alert('❌ Error: No se encontró el formulario.');
+    return;
+  }
+
   const inputs = container.querySelectorAll('input[type="number"]');
+  if (inputs.length === 0) {
+    alert('❌ Error: No se encontraron campos de entrada.');
+    return;
+  }
 
   let addedCount = 0;
-  const updates = {}; // Rastrear solo cambios desde la carga inicial
+  const updates = {};
 
   inputs.forEach(input => {
     const id = input.id;
-    if (!id) return;
+    if (!id || !id.includes('-')) return;
 
     const [type, ...dateParts] = id.split('-');
     const fecha = dateParts.join('-');
@@ -2860,7 +2869,7 @@ function saveManualData() {
   });
 
   if (addedCount === 0) {
-    alert('⚠️ Ingresa al menos un valor.');
+    alert('⚠️ Ingresa al menos un valor en algún campo.');
     return;
   }
 
