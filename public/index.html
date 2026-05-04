@@ -649,6 +649,9 @@
             <div class="empty-step"><i class="bi bi-3-circle-fill"></i> Visualiza tus KPIs al instante</div>
           </div>
           <span class="btn-upload" style="margin-top:8px;"><i class="bi bi-cloud-upload"></i> Seleccionar Archivo Excel</span>
+          <button id="btn-manual-data" onclick="openManualDataModal()" style="margin-top:12px; margin-left:8px; background:#00d4aa; color:#000; border:none; padding:12px 28px; border-radius:8px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 14px rgba(0,255,102,0.2); transition:.2s;" onmouseover="this.style.background='#00b896'" onmouseout="this.style.background='#00d4aa'">
+            <i class="bi bi-pencil-square"></i> Cargar Datos Manualmente
+          </button>
         </div>
         <!-- Barra de progreso (visible al procesar) -->
         <div id="upload-progress-bar">
@@ -977,6 +980,39 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- MODAL CARGA MANUAL DE DATOS POR DÍA -->
+<div class="modal-overlay" id="modal-manual-data" style="display:none;">
+  <div class="modal-card" style="max-width:700px; width:95%; max-height:85vh; overflow-y:auto;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="bi bi-pencil-square" style="color:var(--primary);"></i> Cargar Datos Manualmente</div>
+      <div class="modal-close" onclick="closeManualDataModal()"><i class="bi bi-x"></i></div>
+    </div>
+
+    <p class="modal-sub">
+      Ingresa registros y FTDs para cada día. Selecciona el país y completa los campos.
+    </p>
+
+    <!-- País selector -->
+    <div style="margin-bottom:20px;">
+      <div class="filter-label">¿Para qué país?</div>
+      <div style="display:flex; gap:8px;">
+        <button onclick="setManualCountry('SV')" id="manual-sv" style="flex:1; padding:10px; border-radius:8px; border:2px solid var(--primary); background:var(--primary); color:#000; font-weight:800; cursor:pointer;">🇸🇻 El Salvador</button>
+        <button onclick="setManualCountry('GT')" id="manual-gt" style="flex:1; padding:10px; border-radius:8px; border:2px solid var(--border); background:var(--bg); color:var(--text-main); font-weight:700; cursor:pointer;">🇬🇹 Guatemala</button>
+      </div>
+    </div>
+
+    <!-- Formulario de fechas -->
+    <div id="manual-dates-form" style="max-height:450px; overflow-y:auto; border:1px solid var(--border); border-radius:10px; padding:16px; background:var(--card-bg);">
+      <p style="text-align:center; color:var(--text-muted); font-size:12px;">Cargando fechas disponibles...</p>
+    </div>
+
+    <!-- Botón guardar -->
+    <button onclick="saveManualData()" style="width:100%; margin-top:16px; padding:14px; background:var(--primary); color:#000; border:none; border-radius:8px; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(0,255,102,0.2);">
+      <i class="bi bi-check-lg"></i> Guardar Datos y Actualizar Dashboard
+    </button>
   </div>
 </div>
 
@@ -2653,6 +2689,157 @@ function openAnalyticsModal() {
 
 function closeAnalyticsModal() {
   document.getElementById('modal-analytics').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+// CARGA MANUAL DE DATOS POR DÍA
+// ═══════════════════════════════════════════════════════
+let manualCountrySelected = 'SV';
+let manualDataInputs = {}; // { 'YYYY-MM-DD': { registros, ftds } }
+
+function openManualDataModal() {
+  const role = sessionStorage.getItem('gp_role');
+  if (role === 'supervisor') {
+    alert('❌ Acceso denegado.\n\nSolo el ADMIN (Angel) puede cargar datos manualmente.');
+    return;
+  }
+  if (globalData.length === 0) {
+    alert('Primero sube el Excel con tus registros.');
+    return;
+  }
+  document.getElementById('modal-manual-data').style.display = 'flex';
+  manualCountrySelected = 'SV';
+  renderManualDataForm();
+}
+
+function closeManualDataModal() {
+  document.getElementById('modal-manual-data').style.display = 'none';
+  manualDataInputs = {};
+}
+
+function setManualCountry(country) {
+  manualCountrySelected = country;
+  ['manual-sv', 'manual-gt'].forEach(id => {
+    const btn = $(id);
+    if (btn) {
+      if (id === 'manual-' + country.toLowerCase()) {
+        btn.style.background = 'var(--primary)';
+        btn.style.borderColor = 'var(--primary)';
+        btn.style.color = '#000';
+      } else {
+        btn.style.background = 'var(--bg)';
+        btn.style.borderColor = 'var(--border)';
+        btn.style.color = 'var(--text-main)';
+      }
+    }
+  });
+  renderManualDataForm();
+}
+
+function renderManualDataForm() {
+  const container = $('manual-dates-form');
+  if (!container) return;
+
+  const fechas = globalData.map(d => d.Fecha).filter(Boolean).sort();
+  if (fechas.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:var(--text-muted);">No hay fechas disponibles</p>';
+    return;
+  }
+
+  const lastDate = new Date(fechas[fechas.length - 1]);
+  const nextDates = [];
+  for (let i = 1; i <= 5; i++) {
+    const d = new Date(lastDate);
+    d.setDate(d.getDate() + i);
+    const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    nextDates.push(iso);
+  }
+
+  let html = `
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
+        <strong>Últimos datos:</strong> ${fechas[fechas.length - 1]}<br>
+        Ingresa datos para los próximos días
+      </p>
+  `;
+
+  nextDates.forEach(fecha => {
+    const key = `${manualCountrySelected}::${fecha}`;
+    const existing = manualDataInputs[key] || { registros: '', ftds: '' };
+
+    html += `
+      <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; align-items:end;">
+        <div>
+          <label style="font-size:11px; color:var(--text-muted); font-weight:700; display:block; margin-bottom:4px;">Fecha</label>
+          <input type="text" value="${fecha}" disabled style="width:100%; padding:8px; background:var(--card-bg); border:1px solid var(--border); border-radius:6px; color:var(--text-main); font-weight:700; text-align:center;">
+        </div>
+        <div>
+          <label style="font-size:11px; color:var(--text-muted); font-weight:700; display:block; margin-bottom:4px;">Registros</label>
+          <input type="number" id="reg-${fecha}" value="${existing.registros}" placeholder="0" min="0" style="width:100%; padding:8px; background:var(--card-bg); border:1px solid var(--border); border-radius:6px; color:var(--text-main); font-weight:700;">
+        </div>
+        <div>
+          <label style="font-size:11px; color:var(--text-muted); font-weight:700; display:block; margin-bottom:4px;">FTDs</label>
+          <input type="number" id="ftd-${fecha}" value="${existing.ftds}" placeholder="0" min="0" style="width:100%; padding:8px; background:var(--card-bg); border:1px solid var(--border); border-radius:6px; color:var(--text-main); font-weight:700;">
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+function saveManualData() {
+  const container = $('manual-dates-form');
+  const inputs = container.querySelectorAll('input[type="number"]');
+
+  let addedCount = 0;
+  inputs.forEach(input => {
+    const dateInput = input.parentElement.parentElement.querySelector('input[disabled]');
+    const fecha = dateInput.value;
+    const value = parseInt(input.value) || 0;
+    const isReg = input.id.startsWith('reg-');
+    const key = `${manualCountrySelected}::${fecha}`;
+
+    if (!manualDataInputs[key]) manualDataInputs[key] = { registros: 0, ftds: 0 };
+    if (isReg) manualDataInputs[key].registros = value;
+    else manualDataInputs[key].ftds = value;
+
+    if (value > 0) addedCount++;
+  });
+
+  if (addedCount === 0) {
+    alert('⚠️ Ingresa al menos un valor.');
+    return;
+  }
+
+  // Agregar datos a globalData
+  Object.entries(manualDataInputs).forEach(([key, data]) => {
+    const [pais, fecha] = key.split('::');
+    const existing = globalData.find(d => d.Fecha === fecha && d.Pais === pais);
+
+    if (existing) {
+      existing.Registros = (existing.Registros || 0) + data.registros;
+      existing.Depositos = (existing.Depositos || 0) + data.ftds;
+    } else {
+      globalData.push({
+        Fecha: fecha,
+        Pais: pais,
+        Link: 'Manual',
+        Registros: data.registros,
+        Depositos: data.ftds,
+        Inversion: 0,
+        Clicks: 0
+      });
+    }
+  });
+
+  // Guardar y actualizar
+  saveToLocal();
+  updateUploadAreaUI();
+  renderDashboard();
+  closeManualDataModal();
+  alert('✅ Datos cargados exitosamente. Dashboard actualizado.');
 }
 
 function renderAnalytics() {
