@@ -649,9 +649,6 @@
             <div class="empty-step"><i class="bi bi-3-circle-fill"></i> Visualiza tus KPIs al instante</div>
           </div>
           <span class="btn-upload" style="margin-top:8px;"><i class="bi bi-cloud-upload"></i> Seleccionar Archivo Excel</span>
-          <button id="btn-manual-data" onclick="openManualDataModal()" style="margin-top:12px; margin-left:8px; background:#00d4aa; color:#000; border:none; padding:12px 28px; border-radius:8px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 14px rgba(0,255,102,0.2); transition:.2s;" onmouseover="this.style.background='#00b896'" onmouseout="this.style.background='#00d4aa'">
-            <i class="bi bi-pencil-square"></i> Cargar Datos Manualmente
-          </button>
         </div>
         <!-- Barra de progreso (visible al procesar) -->
         <div id="upload-progress-bar">
@@ -661,6 +658,10 @@
         </div>
         <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none">
       </label>
+      <!-- Botón de carga manual FUERA del label -->
+      <button id="btn-manual-data" onclick="openManualDataModal()" style="margin-top:12px; background:#00d4aa; color:#000; border:none; padding:12px 28px; border-radius:8px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 14px rgba(0,255,102,0.2); transition:.2s;" onmouseover="this.style.background='#00b896'" onmouseout="this.style.background='#00d4aa'">
+        <i class="bi bi-pencil-square"></i> Cargar Datos Manualmente
+      </button>
     </div>
 
     <!-- COOPERATIVE STRATEGY CHAT -->
