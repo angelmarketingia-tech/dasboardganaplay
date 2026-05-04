@@ -635,8 +635,8 @@
     </div>
 
     <!-- UPLOAD -->
-    <div id="upload-area" class="restrict-supervisor">
-      <label style="cursor:pointer; display:block;">
+    <div id="upload-area">
+      <label style="cursor:pointer; display:block;" id="upload-label">
         <div class="empty-state">
           <div class="empty-state-icon">
             <i class="bi bi-file-earmark-spreadsheet-fill"></i>
@@ -1046,6 +1046,36 @@ async function saveToLocal() {
   }
 }
 
+function updateUploadAreaUI() {
+  const ua = $('upload-area');
+  if (!ua) return;
+
+  const emptyState = ua.querySelector('.empty-state');
+  if (!emptyState) return;
+
+  if (globalData.length > 0) {
+    // Hay datos cargados
+    const h3 = emptyState.querySelector('h3');
+    const p = emptyState.querySelector('p:not(.empty-step-parent)');
+    const stepDiv = emptyState.querySelector('.empty-state-steps');
+
+    if (h3) h3.textContent = `✅ ${globalData.length} filas cargadas`;
+    if (p) p.textContent = 'Puedes subir un nuevo archivo Excel o editar los datos manualmente.';
+    if (stepDiv) stepDiv.style.display = 'none';
+  }
+
+  // Aplicar bloqueo visual para supervisor
+  const role = sessionStorage.getItem('gp_role');
+  const uploadLabel = document.getElementById('upload-label');
+  if (role === 'supervisor' && uploadLabel) {
+    uploadLabel.style.pointerEvents = 'none';
+    uploadLabel.style.opacity = '0.5';
+    uploadLabel.style.cursor = 'not-allowed';
+    ua.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+    ua.style.backgroundColor = 'rgba(245, 158, 11, 0.05)';
+  }
+}
+
 async function loadFromServer() {
   try {
     let bundle = null;
@@ -1058,7 +1088,7 @@ async function loadFromServer() {
         bundle = snapshot.val();
         console.log("🔥 [FIREBASE] Datos frescos descargados.");
       }
-    } 
+    }
     // 2. Fallback al servidor express temporal
     if (!bundle) {
        const res = await fetch('/api/load-data', { headers: authHeaders() });
@@ -1080,6 +1110,9 @@ async function loadFromServer() {
     linksSet.clear();
     globalData.forEach(d => { if(d.Link) linksSet.add(d.Link); });
 
+    // Actualizar visual del upload-area cuando hay datos
+    updateUploadAreaUI();
+
     console.log(`☁️ [SYNC] Sincronización completa. Última actualización: ${bundle.savedAt}`);
     return true;
   } catch (e) {
@@ -1094,15 +1127,18 @@ function loadFromLocal() {
   try {
     const bundle = JSON.parse(raw);
     if (!bundle) return false;
-    
+
     globalData        = bundle.globalData || [];
     manualInvestments = bundle.manualInvestments || {};
     strategyHistory   = bundle.strategyHistory || [];
-    
+
     // Reconstruir filtros
     linksSet.clear();
     globalData.forEach(d => { if(d.Link) linksSet.add(d.Link); });
-    
+
+    // Actualizar visual del upload-area cuando hay datos
+    updateUploadAreaUI();
+
     console.log("📂 [LOCAL] Datos recuperados de caché local");
     return true;
   } catch (e) {
@@ -1116,8 +1152,31 @@ function handleRoleUI() {
   const role = sessionStorage.getItem('gp_role');
   if (role === 'supervisor') {
     document.body.classList.add('is-supervisor');
+    // Bloquear visual el upload-area para supervisor
+    const uploadLabel = document.getElementById('upload-label');
+    if (uploadLabel) {
+      uploadLabel.style.pointerEvents = 'none';
+      uploadLabel.style.opacity = '0.5';
+      uploadLabel.style.cursor = 'not-allowed';
+    }
+    const uploadArea = $('upload-area');
+    if (uploadArea) {
+      uploadArea.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+      uploadArea.style.backgroundColor = 'rgba(245, 158, 11, 0.05)';
+    }
   } else {
     document.body.classList.remove('is-supervisor');
+    const uploadLabel = document.getElementById('upload-label');
+    if (uploadLabel) {
+      uploadLabel.style.pointerEvents = 'auto';
+      uploadLabel.style.opacity = '1';
+      uploadLabel.style.cursor = 'pointer';
+    }
+    const uploadArea = $('upload-area');
+    if (uploadArea) {
+      uploadArea.style.borderColor = 'var(--primary)';
+      uploadArea.style.backgroundColor = 'var(--card-bg)';
+    }
   }
   updateStrategyDisplay();
 }
@@ -1328,7 +1387,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fileInput.addEventListener('change', function(e) {
       // Bloquear subida para supervisor
       if (sessionStorage.getItem('gp_role') === 'supervisor') {
-        alert('Solo lectura: no tienes permisos para subir archivos.');
+        alert('❌ Acceso denegado.\n\nSolo el ADMIN (Angel) puede subir archivos Excel.\n\nTú tienes acceso de SOLO LECTURA. Puedes visualizar todos los datos cargados.');
         e.target.value = '';
         return;
       }
@@ -1850,23 +1909,8 @@ function updateFilterUI() {
     });
   }
 
-  const ua = $('upload-area');
-  if (ua) {
-    // Colapsar el empty-state a una barra compacta indicando que ya hay datos
-    const emptyState = ua.querySelector('.empty-state');
-    if (emptyState) {
-      emptyState.innerHTML = `
-        <i class="bi bi-check-circle-fill" style="font-size:22px; color:var(--primary);"></i>
-        <span style="font-size:14px; font-weight:700; color:var(--text-main);">
-          ${globalData.length} filas cargadas
-        </span>
-        <span style="font-size:12px; color:var(--text-muted);">Haz clic para cambiar el archivo Excel</span>
-      `;
-      emptyState.style.flexDirection = 'row';
-      emptyState.style.padding = '14px 28px';
-      emptyState.style.gap = '12px';
-    }
-  }
+  // Actualizar la interfaz del upload-area
+  updateUploadAreaUI();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1942,6 +1986,11 @@ function setQuickFilter(mode) {
 }
 
 function resetSystemData() {
+  const role = sessionStorage.getItem('gp_role');
+  if (role === 'supervisor') {
+    alert('❌ Acceso denegado.\n\nSolo el ADMIN puede restablecer el sistema.');
+    return;
+  }
   if (confirm("🚨 ¡ADVERTENCIA CRÍTICA!\n\nSe borrarán TODOS los datos cargados: Excel, Inversiones de la IA e Historial de Chat con Andrés.\n\nEsta acción NO se puede deshacer. ¿Deseas continuar?")) {
     globalData = [];
     manualInvestments = {};
@@ -2112,6 +2161,11 @@ function renderDashboard() {
 // MODAL OCR — INVERSIÓN CON IA
 // ═══════════════════════════════════════════════════════
 function openInvModal() {
+  const role = sessionStorage.getItem('gp_role');
+  if (role === 'supervisor') {
+    alert('❌ Acceso denegado.\n\nSolo el ADMIN (Angel) puede cargar inversiones.\n\nTú puedes visualizar todos los datos en el Panel de Inversión.');
+    return;
+  }
   if (globalData.length === 0) { alert('Primero sube el Excel con tus registros.'); return; }
   $('modal-inv').style.display = 'flex';
   resetOcr();
