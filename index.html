@@ -273,12 +273,15 @@
       transition: all .3s ease;
     }
     #upload-area.collapsed {
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
     #upload-area.collapsed .upload-main,
     #upload-area.collapsed #upload-progress-bar,
     #upload-area.collapsed .upload-formats {
-      display: none !important;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: all .3s ease;
     }
 
     .upload-container { display: flex; flex-direction: column; }
@@ -717,6 +720,34 @@
       .kpi-grid { grid-template-columns: 1fr 1fr; }
       .country-btn { padding: 8px 4px; font-size: 11px; }
     }
+
+    /* ── COUNTRY SELECTOR (MANUAL DATA FORM) ── */
+    .country-selector {
+      padding: 11px 14px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--text-main);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: Inter;
+    }
+    .country-selector:hover {
+      border-color: var(--primary);
+      background: var(--card-bg);
+    }
+    .country-selector.active {
+      background: var(--primary);
+      color: #000;
+      border-color: var(--primary);
+      box-shadow: 0 0 12px rgba(0,255,102,0.3);
+    }
   </style>
 </head>
 <body>
@@ -915,7 +946,7 @@
         <button id="qf-week"      class="btn-action qf-btn" onclick="setQuickFilter('week')"><i class="bi bi-calendar-week"></i> 7 días</button>
         <button id="qf-all"       class="btn-action qf-btn" onclick="setQuickFilter('all')"><i class="bi bi-calendar-range"></i> Todo</button>
         <button class="btn-action btn-light" onclick="clearFilters()"><i class="bi bi-x"></i> Limpiar</button>
-        <button class="btn-action btn-primary-fill" onclick="openManualDataModal()"><i class="bi bi-pencil-square"></i> Datos Manuales</button>
+        <button class="btn-action btn-primary-fill" onclick="openManualDataModal()" style="border: 2px solid var(--primary); font-weight:800;"><i class="bi bi-pencil-square"></i> ➕ Datos Manuales</button>
         <button class="btn-action btn-dark-fill" onclick="openInvModal()"><i class="bi bi-robot"></i> Cargar Inversión (IA)</button>
         <button class="btn-action btn-primary-fill" onclick="openAnalyticsModal()"><i class="bi bi-graph-up-arrow"></i> Analíticas</button>
       </div>
@@ -1154,36 +1185,6 @@
     </div>
   </div>
 </div>
-
-<!-- CSS PARA COUNTRY SELECTOR -->
-<style>
-  .country-selector {
-    padding: 11px 14px;
-    border-radius: 8px;
-    border: 1.5px solid var(--border);
-    background: var(--bg);
-    color: var(--text-main);
-    font-weight: 700;
-    cursor: pointer;
-    transition: all .2s;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-family: Inter;
-  }
-  .country-selector:hover {
-    border-color: var(--primary);
-    background: var(--card-bg);
-  }
-  .country-selector.active {
-    background: var(--primary);
-    color: #000;
-    border-color: var(--primary);
-    box-shadow: 0 0 12px rgba(0,255,102,0.3);
-  }
-</style>
 
 <div class="modal-overlay" id="modal-inv">
   <div class="modal-card">
@@ -2240,11 +2241,11 @@ function updateFilterUI() {
     .map(p => p === 'SV' ? '🇸🇻 El Salvador' : '🇬🇹 Guatemala').join(' + ');
   $('topbar-sub').textContent = `${globalData.length} registros cargados · ${countries}`;
 
-  // Colapsar sección de carga después de cargar datos exitosamente
-  const uploadArea = document.getElementById('upload-area');
-  if (uploadArea && !uploadArea.classList.contains('collapsed')) {
-    setTimeout(() => toggleUploadSection(), 400);
-  }
+  // NO colapsar la sección de carga - mantenerla siempre visible
+  // const uploadArea = document.getElementById('upload-area');
+  // if (uploadArea && !uploadArea.classList.contains('collapsed')) {
+  //   setTimeout(() => toggleUploadSection(), 400);
+  // }
 
   // Auto-filtrar al mes actual completo al cargar datos
   if (globalData.length > 0) {
