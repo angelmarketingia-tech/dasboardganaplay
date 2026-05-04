@@ -2712,6 +2712,19 @@ function openManualDataModal() {
   document.getElementById('modal-manual-data').style.display = 'flex';
   manualCountrySelected = 'SV';
   manualSelectedMonth = null;
+
+  // Pre-cargar datos existentes del Excel en manualDataInputs
+  manualDataInputs = {};
+  globalData.forEach(row => {
+    if (row.Fecha && row.Pais) {
+      const key = `${row.Pais}::${row.Fecha}`;
+      manualDataInputs[key] = {
+        registros: row.Registros || 0,
+        ftds: row.Depositos || 0
+      };
+    }
+  });
+
   renderManualDataForm();
 }
 
@@ -2827,19 +2840,21 @@ function saveManualData() {
   const inputs = container.querySelectorAll('input[type="number"]');
 
   let addedCount = 0;
+  const updates = {}; // Rastrear solo cambios desde la carga inicial
+
   inputs.forEach(input => {
-    const id = input.id; // e.g., "reg-2026-05-04" or "ftd-2026-05-04"
+    const id = input.id;
     if (!id) return;
 
     const [type, ...dateParts] = id.split('-');
-    const fecha = dateParts.join('-'); // e.g., "2026-05-04"
+    const fecha = dateParts.join('-');
     const value = parseInt(input.value) || 0;
     const isReg = type === 'reg';
     const key = `${manualCountrySelected}::${fecha}`;
 
-    if (!manualDataInputs[key]) manualDataInputs[key] = { registros: 0, ftds: 0 };
-    if (isReg) manualDataInputs[key].registros = value;
-    else manualDataInputs[key].ftds = value;
+    if (!updates[key]) updates[key] = { registros: 0, ftds: 0 };
+    if (isReg) updates[key].registros = value;
+    else updates[key].ftds = value;
 
     if (value > 0) addedCount++;
   });
@@ -2849,33 +2864,38 @@ function saveManualData() {
     return;
   }
 
-  // Agregar datos a globalData
-  Object.entries(manualDataInputs).forEach(([key, data]) => {
+  // Actualizar globalData sincronizando con datos existentes
+  Object.entries(updates).forEach(([key, newData]) => {
     const [pais, fecha] = key.split('::');
-    const existing = globalData.find(d => d.Fecha === fecha && d.Pais === pais);
+    const existingIndex = globalData.findIndex(d => d.Fecha === fecha && d.Pais === pais);
 
-    if (existing) {
-      existing.Registros = (existing.Registros || 0) + data.registros;
-      existing.Depositos = (existing.Depositos || 0) + data.ftds;
-    } else {
+    if (existingIndex >= 0) {
+      // Actualizar registro existente: reemplazar con nuevos valores
+      globalData[existingIndex].Registros = newData.registros;
+      globalData[existingIndex].Depositos = newData.ftds;
+    } else if (newData.registros > 0 || newData.ftds > 0) {
+      // Crear nuevo registro solo si hay datos
       globalData.push({
         Fecha: fecha,
         Pais: pais,
         Link: 'Manual',
-        Registros: data.registros,
-        Depositos: data.ftds,
+        Registros: newData.registros,
+        Depositos: newData.ftds,
         Inversion: 0,
         Clicks: 0
       });
     }
   });
 
+  // Ordenar por fecha
+  globalData.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
+
   // Guardar y actualizar
   saveToLocal();
   updateUploadAreaUI();
   renderDashboard();
   closeManualDataModal();
-  alert('✅ Datos cargados exitosamente. Dashboard actualizado.');
+  alert('✅ Datos cargados y sincronizados. Dashboard actualizado.');
 }
 
 function renderAnalytics() {
