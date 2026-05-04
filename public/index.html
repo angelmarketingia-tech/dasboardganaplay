@@ -2836,13 +2836,17 @@ function renderManualDataForm() {
 }
 
 function saveManualData() {
+  console.log('🔵 saveManualData() iniciada');
+
   const container = $('manual-dates-form');
+  console.log('Container:', container);
   if (!container) {
     alert('❌ Error: No se encontró el formulario.');
     return;
   }
 
   const inputs = container.querySelectorAll('input[type="number"]');
+  console.log('Inputs encontrados:', inputs.length);
   if (inputs.length === 0) {
     alert('❌ Error: No se encontraron campos de entrada.');
     return;
